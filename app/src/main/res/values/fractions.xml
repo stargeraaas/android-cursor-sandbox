@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- BaseFocusableCanvasView defaults -->
+    <!-- 0.03 = 3% -->
+    <fraction name="pc_focus_scale_percent">3%</fraction>
+</resources>
+
+

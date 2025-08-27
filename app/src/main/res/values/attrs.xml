@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="TitleSubtitleView">
+        <attr name="pc_titleText" format="string"/>
+        <attr name="pc_subtitleText" format="string"/>
+        <attr name="pc_titleMaxLines" format="integer"/>
+        <attr name="pc_subtitleMaxLines" format="integer"/>
+        <attr name="pc_widthPx" format="dimension"/>
+    </declare-styleable>
+</resources>

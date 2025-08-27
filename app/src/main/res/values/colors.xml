@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- BaseFocusableCanvasView defaults -->
+    <color name="pc_color_unfocused">#FF444444</color>
+    <color name="pc_color_focused">#FFFFFFFF</color>
+
+    <!-- LabelTextView text colors -->
+    <color name="pc_title_text_unfocused">#F5FFFFFF</color>
+    <color name="pc_title_text_focused">#F5000000</color>
+    <color name="pc_subtitle_text_unfocused">#8FFFFFFF</color>
+    <color name="pc_subtitle_text_focused">#8F000000</color>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ширина вью по умолчанию: 394 пикселя -->
+    <dimen name="pc_default_width">394px</dimen>
+    <!-- Отступ между строками: 12 пикселей -->
+    <dimen name="pc_line_spacing">12px</dimen>
+
+    <!-- BaseFocusableCanvasView defaults -->
+    <dimen name="pc_min_content_width">412dp</dimen>
+    <dimen name="pc_min_content_height">60dp</dimen>
+    <dimen name="pc_corner_radius">16dp</dimen>
+
+    <!-- LabelTextView defaults -->
+    <dimen name="pc_label_left_padding">16dp</dimen>
+    <dimen name="pc_title_subtitle_spacing">2dp</dimen>
+    <dimen name="pc_vertical_padding">8dp</dimen>
+    <dimen name="pc_horizontal_padding">8dp</dimen>
+    <!-- per-side defaults -->
+    <dimen name="pc_padding_top">8dp</dimen>
+    <dimen name="pc_padding_bottom">8dp</dimen>
+    <dimen name="pc_padding_start">8dp</dimen>
+    <dimen name="pc_padding_end">8dp</dimen>
+</resources>

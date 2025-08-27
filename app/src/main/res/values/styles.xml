@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TextAppearances для Title и Subtitle -->
+    <style name="TextAppearance.PC.Title.Focused" parent="@android:style/TextAppearance.Material.Headline">
+        <item name="android:textColor">#F5000000</item>
+        <item name="android:fontWeight">600</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.PC.Title.Unfocused" parent="@android:style/TextAppearance.Material.Headline">
+        <item name="android:textColor">#F5FFFFFF</item>
+        <item name="android:fontWeight">400</item>
+        <item name="android:typeface">normal</item>
+    </style>
+
+    <style name="TextAppearance.PC.Subtitle" parent="@android:style/TextAppearance.Material.Body1">
+        <item name="android:textColor">#8DFFFFFF</item>
+    </style>
+</resources>
