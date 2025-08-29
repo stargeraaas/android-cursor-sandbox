@@ -9,30 +9,62 @@
     tools:context=".MainActivity">
 
     <LinearLayout
-        android:padding="16dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <dev.stargeras.sandbox.BaseFocusableCanvasView
+        <dev.stargeras.sandbox.TitleSubtitleButton
             android:id="@+id/view1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"/>
+            app:pc_titleText="ЗаголовокgfdgdfgdfgfdgdfgЗаголовокgfdgdfgdfgfdgdfgЗаголовокgfdgdfgdfgfdgdfg"
+            app:pc_subtitleText="ПодзаголовокgfdgdfhdghgfhgfjfgjfjgfjfgjПодзаголовокgfdgdfhdghgfhgfjfgjfjgfjfgjПодзаголовокgfdgdfhdghgfhgfjfgjfjgfjfgj"
+            app:pc_focusedTitleTextAppearance="@style/TextAppearance.PC.Title.Focused"
+            app:pc_subtitleTextAppearance="@style/TextAppearance.PC.Subtitle"
+            app:pc_unfocusedTitleTextAppearance="@style/TextAppearance.PC.Title.Unfocused"
+            android:layout_marginBottom="8dp"
+            app:pc_paddingTop="12dp"
+            app:pc_paddingBottom="12dp"
+            app:pc_paddingStart="16dp"
+            app:pc_paddingEnd="16dp"/>
 
-        <dev.stargeras.sandbox.BaseFocusableCanvasView
+        <dev.stargeras.sandbox.TitleSubtitleButton
             android:id="@+id/view2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"/>
+            app:pc_titleText="Заголовок"
+            app:pc_subtitleText="Подзаголовок"
+            app:pc_focusedTitleTextAppearance="@style/TextAppearance.PC.Title.Focused"
+            app:pc_unfocusedTitleTextAppearance="@style/TextAppearance.PC.Title.Unfocused"
+            app:pc_subtitleTextAppearance="@style/TextAppearance.PC.Subtitle"
+            android:layout_marginBottom="8dp"
+            app:pc_paddingTop="12dp"
+            app:pc_paddingBottom="12dp"
+            app:pc_paddingStart="16dp"
+            app:pc_paddingEnd="16dp"/>
 
-        <dev.stargeras.sandbox.BaseFocusableCanvasView
+        <dev.stargeras.sandbox.TitleSubtitleButton
             android:id="@+id/view3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"/>
+            android:padding="16dp"
+            app:pc_titleText="Заголовок"
+            app:pc_focusedTitleTextAppearance="@style/TextAppearance.PC.Title.Focused"
+            app:pc_unfocusedTitleTextAppearance="@style/TextAppearance.PC.Title.Unfocused"
+            app:pc_subtitleTextAppearance="@style/TextAppearance.PC.Subtitle"
+            android:layout_marginBottom="8dp"
+            app:pc_paddingTop="12dp"
+            app:pc_paddingBottom="12dp"
+            app:pc_paddingStart="16dp"
+            app:pc_paddingEnd="16dp"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

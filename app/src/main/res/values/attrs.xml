@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="TitleSubtitleView">
-        <attr name="pc_titleText" format="string"/>
-        <attr name="pc_subtitleText" format="string"/>
+        <attr name="pc_titleText" />
+        <attr name="pc_subtitleText" />
         <attr name="pc_titleMaxLines" format="integer"/>
         <attr name="pc_subtitleMaxLines" format="integer"/>
         <attr name="pc_widthPx" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="TitleSubtitleButton">
+        <attr name="pc_titleText" format="string"/>
+        <attr name="pc_subtitleText" format="string"/>
+        <attr name="pc_focusedTitleTextAppearance" format="reference"/>
+        <attr name="pc_unfocusedTitleTextAppearance" format="reference"/>
+        <attr name="pc_subtitleTextAppearance" format="reference"/>
+        <!-- legacy group paddings -->
+        <attr name="pc_verticalPadding" format="dimension"/>
+        <attr name="pc_horizontalPadding" format="dimension"/>
+        <!-- per-side paddings -->
+        <attr name="pc_paddingTop" format="dimension"/>
+        <attr name="pc_paddingBottom" format="dimension"/>
+        <attr name="pc_paddingStart" format="dimension"/>
+        <attr name="pc_paddingEnd" format="dimension"/>
+        <attr name="pc_titleMaxLines" />
+        <attr name="pc_subtitleMaxLines" />
     </declare-styleable>
 </resources>
