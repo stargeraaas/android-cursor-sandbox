@@ -18,6 +18,6 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        findViewById<View>(R.id.view1).requestFocus()
+        findViewById<View>(R.id.titleSubtitleCard).requestFocus()
     }
 }
