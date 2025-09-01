@@ -62,7 +62,7 @@ class TitleSubtitleDrawer(
 
     /** Стиль текста подзаголовка */
     private var subtitleStyle: TextStyle =
-        TextStyle(R.style.TextAppearance_PC_Subtitle, R.style.TextAppearance_PC_Subtitle)
+        TextStyle(R.style.TextAppearance_PC_Subtitle_Focused, R.style.TextAppearance_PC_Subtitle_Unfocused)
 
     /** Отступ между заголовком и подзаголовком (px) */
     var spacingBetweenTexts: Int = 8

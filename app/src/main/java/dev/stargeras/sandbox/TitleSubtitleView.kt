@@ -48,7 +48,7 @@ class TitleSubtitleView @JvmOverloads constructor(
     }
 
     private val subtitlePaint = TextView(context).let { textView ->
-        textView.setTextAppearance(R.style.TextAppearance_PC_Subtitle)
+        textView.setTextAppearance(R.style.TextAppearance_PC_Subtitle_Unfocused)
 
         TextPaint().apply {
             isAntiAlias = true

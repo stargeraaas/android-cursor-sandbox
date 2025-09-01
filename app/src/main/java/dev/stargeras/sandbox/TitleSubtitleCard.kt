@@ -34,7 +34,7 @@ class TitleSubtitleCard @JvmOverloads constructor(
         titleSubtitleDrawer.titleText = "Title"
         titleSubtitleDrawer.subtitleText = "Subtitle"
         titleSubtitleDrawer.setTitleTextStyle(TextStyle(R.style.TextAppearance_PC_Title_Focused, R.style.TextAppearance_PC_Title_Unfocused))
-        titleSubtitleDrawer.setSubtitleTextStyle(TextStyle(R.style.TextAppearance_PC_Subtitle, R.style.TextAppearance_PC_Subtitle))
+        titleSubtitleDrawer.setSubtitleTextStyle(TextStyle(R.style.TextAppearance_PC_Subtitle_Focused, R.style.TextAppearance_PC_Subtitle_Unfocused))
     }
 
     override fun onDraw(canvas: Canvas) {
