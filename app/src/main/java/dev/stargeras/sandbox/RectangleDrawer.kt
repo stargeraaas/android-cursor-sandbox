@@ -8,8 +8,6 @@ import android.graphics.Paint
 import android.util.Log
 import android.view.View
 import androidx.annotation.ColorInt
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Data class для хранения координат прямоугольника.
@@ -28,7 +26,7 @@ data class RectangleCoordinates(
 class RectangleDrawer(
     private val context: Context,
     private val targetView: View
-): Drawer {
+) : Drawer {
 
     /** Цвет без фокуса. */
     @ColorInt
@@ -46,6 +44,13 @@ class RectangleDrawer(
 
     /** Флаг, указывающий, находится ли элемент в фокусе. */
     var isFocused: Boolean = false
+        set(value) {
+            if (field == value) return
+
+            field = value
+
+            startFocusAnimation(field)
+        }
 
     /** Процент масштабирования при фокусе [0f..1f]. По умолчанию 3% */
     var focusScalePercent: Float =
@@ -88,60 +93,6 @@ class RectangleDrawer(
     var bottomY: Int = 0
         private set
 
-    // ---------- Методы вычисления размеров ----------
-
-    /**
-     * Вычисляет размеры прямоугольника с учетом масштаба.
-     *
-     * @param baseWidth базовая ширина
-     * @param baseHeight базовая высота
-     * @param minWidth минимальная ширина
-     * @param minHeight минимальная высота
-     * @param availableWidth доступная ширина
-     * @param availableHeight доступная высота
-     * @return Pair<ширина, высота> в пикселях
-     */
-    private fun calculateRectangleSize(
-        baseWidth: Int,
-        baseHeight: Int,
-        minWidth: Int,
-        minHeight: Int
-    ): Pair<Int, Int> {
-        val stableWidth = max(baseWidth, minWidth)
-        val stableHeight = max(baseHeight, minHeight)
-        val targetWidth = min((stableWidth * currentScale).toInt(), minWidth)
-        val targetHeight = min((stableHeight * currentScale).toInt(), minHeight)
-
-        return Pair(targetWidth, targetHeight)
-    }
-
-    /**
-     * Вычисляет координаты прямоугольника для центрирования.
-     *
-     * @param targetWidth целевая ширина прямоугольника
-     * @param targetHeight целевая высота прямоугольника
-     * @return RectangleCoordinates с координатами прямоугольника
-     */
-    private fun calculateRectangleCoordinates(
-        targetWidth: Int,
-        targetHeight: Int
-    ): RectangleCoordinates {
-        // Для центрирования прямоугольника нужно знать размеры контейнера
-        // Поскольку у нас нет доступной ширины/высоты, центрируем относительно (0,0)
-        val left = 0
-        val top = 0
-        val right = targetWidth
-        val bottom = targetHeight
-
-        Log.d(
-            "RectangleDrawer",
-            "calculateRectangleCoordinates: targetWidth=$targetWidth, targetHeight=$targetHeight, currentScale=$currentScale"
-        )
-        Log.d("RectangleDrawer", "coordinates: left=$left, top=$top, right=$right, bottom=$bottom")
-
-        return RectangleCoordinates(left, top, right, bottom)
-    }
-
     /**
      * Вычисляет и кэширует координаты прямоугольника для заданных параметров.
      *
@@ -157,8 +108,10 @@ class RectangleDrawer(
         targetHeight: Int
     ) {
         // Вычисляем координаты для центрирования
-        val left = (availableWidth - targetWidth) / 2f - (availableWidth - availableWidth / currentScale) / 2
-        val top = (availableHeight - targetHeight) / 2f - (availableHeight - availableHeight / currentScale) / 2
+        val left =
+            (availableWidth - targetWidth) / 2f - (availableWidth - availableWidth / currentScale) / 2
+        val top =
+            (availableHeight - targetHeight) / 2f - (availableHeight - availableHeight / currentScale) / 2
         val right = left + targetWidth
         val bottom = top + targetHeight
 
@@ -190,21 +143,23 @@ class RectangleDrawer(
      */
     fun drawRectangle(canvas: Canvas) {
         // Обновляем цвет в зависимости от состояния фокуса
-        paint.color = if (isFocused) colorFocused else colorUnfocused
+        paint.color = getPaintColor()
 
         Log.i("TitleSubtitleCard", "x=$leftX y=$topY bottomY=$bottomY rightX=$rightX")
 
         // Рисуем прямоугольник используя кэшированные координаты
         canvas.drawRoundRect(
-            leftX.toFloat(), 
-            topY.toFloat(), 
-            rightX.toFloat(), 
-            bottomY.toFloat(), 
-            cornerRadiusPx, 
-            cornerRadiusPx, 
+            leftX.toFloat(),
+            topY.toFloat(),
+            rightX.toFloat(),
+            bottomY.toFloat(),
+            cornerRadiusPx,
+            cornerRadiusPx,
             paint
         )
     }
+
+    private fun getPaintColor() = if (isFocused) colorFocused else colorUnfocused
 
     /**
      * Рисует прямоугольник на заданном Canvas.
@@ -222,10 +177,9 @@ class RectangleDrawer(
         targetWidth: Int,
         targetHeight: Int
     ) {
-        // Сначала вычисляем координаты
+
         calculateCoordinates(availableWidth, availableHeight, targetWidth, targetHeight)
-        
-        // Затем рисуем
+
         drawRectangle(canvas)
     }
 
@@ -234,28 +188,17 @@ class RectangleDrawer(
      *
      * @param focused новое состояние фокуса
      */
-    fun updateFocusState(focused: Boolean) {
+    private fun updateFocusState(focused: Boolean) {
         isFocused = focused
-        paint.color = if (focused) colorFocused else colorUnfocused
+        paint.color = getPaintColor()
     }
-
-    /**
-     * Обновляет масштаб отрисовки.
-     *
-     * @param scale новый масштаб
-     */
-    fun updateScale(scale: Float) {
-        currentScale = scale
-    }
-
-    // ---------- Методы анимации ----------
 
     /**
      * Запускает анимацию изменения масштаба при получении/потере фокуса.
      *
      * @param gainFocus true если элемент получает фокус, false если теряет
      */
-    fun startFocusAnimation(gainFocus: Boolean) {
+    private fun startFocusAnimation(gainFocus: Boolean) {
         scaleAnimator?.cancel()
 
         val start = currentScale

@@ -152,16 +152,12 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: android.graphics.Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
-        rectangleDrawer.startFocusAnimation(gainFocus)
+        rectangleDrawer.isFocused = gainFocus
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         // Приводим цвет к актуальному состоянию фокуса
-        rectangleDrawer.updateFocusState(hasFocus())
+        rectangleDrawer.isFocused = hasFocus()
     }
-
-
 }
-
-

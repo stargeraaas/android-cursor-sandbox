@@ -33,19 +33,32 @@ class TitleSubtitleCard @JvmOverloads constructor(
 
         titleSubtitleDrawer.titleText = "Title"
         titleSubtitleDrawer.subtitleText = "Subtitle"
-        titleSubtitleDrawer.setTitleTextStyle(TextStyle(R.style.TextAppearance_PC_Title_Focused, R.style.TextAppearance_PC_Title_Unfocused))
-        titleSubtitleDrawer.setSubtitleTextStyle(TextStyle(R.style.TextAppearance_PC_Subtitle_Focused, R.style.TextAppearance_PC_Subtitle_Unfocused))
+        titleSubtitleDrawer.setTitleTextStyle(
+            TextStyle(
+                R.style.TextAppearance_PC_Title_Focused,
+                R.style.TextAppearance_PC_Title_Unfocused
+            )
+        )
+        titleSubtitleDrawer.setSubtitleTextStyle(
+            TextStyle(
+                R.style.TextAppearance_PC_Subtitle_Focused,
+                R.style.TextAppearance_PC_Subtitle_Unfocused
+            )
+        )
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        Log.w("TitleSubtitleCard", "onDraw\nwidth= $width height= $height \nrectangleWidthPx= $rectangleWidthPx\n" +
-                "textWidth= ${titleSubtitleDrawer.getContentSize().first} textHeight= ${titleSubtitleDrawer.getContentSize().second}")
+        Log.w(
+            "TitleSubtitleCard",
+            "onDraw\nwidth= $width height= $height \nrectangleWidthPx= $rectangleWidthPx\n" +
+                    "textWidth= ${titleSubtitleDrawer.getContentSize().first} textHeight= ${titleSubtitleDrawer.getContentSize().second}"
+        )
 
         // Теперь View имеет размеры прямоугольника
         // Прямоугольник заполняет всю View
         rectangleDrawer.calculateCoordinates(width.toFloat(), height.toFloat(), width, height)
-        
+
         // Рисуем карточку прямоугольника
         rectangleDrawer.drawRectangle(canvas)
 
@@ -55,32 +68,43 @@ class TitleSubtitleCard @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // Ширина View = ширина прямоугольника (задана кодом)
         val desiredWidth = rectangleWidthPx
-        
+
         // Высота View = высота текста (заголовок + подзаголовок + отступ)
         val textHeight = titleSubtitleDrawer.getContentSize().second
         val desiredHeight = textHeight
 
         val measuredWidth = resolveSize(desiredWidth, widthMeasureSpec)
-        val measuredHeight = resolveSize(desiredHeight, heightMeasureSpec)
 
         // Учитываем масштабирование для анимации фокуса
-        val scaledValueWidth = (measuredWidth - measuredWidth / rectangleDrawer.currentScale).toInt()
-        val scaledWidth = measuredWidth + scaledValueWidth
+        val scaledValueWidth =
+            (measuredWidth - measuredWidth / rectangleDrawer.currentScale).toInt()
 
-        val scaledValueHeight = (measuredHeight - measuredHeight / rectangleDrawer.currentScale).toInt()
-        val scaledHeight = measuredHeight + scaledValueHeight
+
+        val scaledWidth = measuredWidth + scaledValueWidth
 
 
         titleSubtitleDrawer.measure(desiredWidth, -1) { w, h ->
             Log.e("TitleSubtitleCard", "Measured TitleSubtitleDrawer: width=$w height=$h")
+            val measuredHeight = resolveSize(desiredHeight, h)
 
+            val scaledValueHeight =
+                (measuredHeight - measuredHeight / rectangleDrawer.currentScale).toInt()
+            val scaledHeight = measuredHeight + scaledValueHeight
+
+            rectangleDrawer.measure(scaledWidth, scaledHeight) { w, h ->
+
+                Log.e(
+                    "TitleSubtitleCard",
+                    "Measured RectangleDrawer: width=$w height=$h"
+                )
+            }
             setMeasuredDimension(scaledWidth, h)
         }
     }
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
-        rectangleDrawer.startFocusAnimation(gainFocus)
+        rectangleDrawer.isFocused = gainFocus
 
         titleSubtitleDrawer.updateState { oldSTate -> oldSTate.copy(isFocused = gainFocus) }
     }
@@ -88,7 +112,19 @@ class TitleSubtitleCard @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         // Приводим цвет к актуальному состоянию фокуса
-        rectangleDrawer.updateFocusState(hasFocus())
+        rectangleDrawer.isFocused = isFocused
     }
+
+    private var state: State = State()
+
+    fun updateState(newState: (State) -> State) {
+        state = newState.invoke(state)
+    }
+
+    data class State(
+        val title: String = "",
+        val subtitle: String = "",
+        val isFocused: Boolean = false
+    )
 
 }
