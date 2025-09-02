@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import androidx.annotation.ColorInt
+import dev.stargeras.sandbox.drawers.RectangleDrawer
 import kotlin.math.max
 import kotlin.math.min
 
@@ -48,7 +49,6 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
     protected open var colorUnfocused: Int = resources.getColor(R.color.pc_color_unfocused, context.theme)
         set(value) {
             field = value
-            rectangleDrawer.colorUnfocused = value
         }
 
     /** Цвет при фокусе. */
@@ -56,14 +56,13 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
     protected open var colorFocused: Int = resources.getColor(R.color.pc_color_focused, context.theme)
         set(value) {
             field = value
-            rectangleDrawer.colorFocused = value
         }
 
     /** Процент масштабирования при фокусе [0f..1f]. По умолчанию 3% */
     protected open var focusScalePercent: Float = resources.getFraction(R.fraction.pc_focus_scale_percent, 1, 1)
         set(value) {
             field = value.coerceIn(0f, 1f)
-            rectangleDrawer.focusScalePercent = field
+            rectangleDrawer.updateState { oldState -> oldState.copy(focusScalePercent = value) }
         }
 
     /** Длительность анимации (мс). */
@@ -77,7 +76,6 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
     protected open var cornerRadiusPx: Float = resources.getDimension(R.dimen.pc_corner_radius)
         set(value) {
             field = value
-            rectangleDrawer.cornerRadiusPx = value
         }
 
     /** Объект для отрисовки прямоугольника и управления анимацией. */
@@ -96,10 +94,7 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
         defaultFocusHighlightEnabled = false
         
         // Инициализируем RectangleDrawer с текущими параметрами
-        rectangleDrawer.colorUnfocused = colorUnfocused
-        rectangleDrawer.colorFocused = colorFocused
-        rectangleDrawer.cornerRadiusPx = cornerRadiusPx
-        rectangleDrawer.focusScalePercent = focusScalePercent
+        rectangleDrawer.updateState { oldState -> oldState.copy(focusScalePercent = focusScalePercent) }
         rectangleDrawer.animationDurationMs = animationDurationMs
     }
 
@@ -107,14 +102,14 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
     fun contentWidth(): Int {
         val requested = currentContentWidthPx ?: rectBaseWidthPx
         val stable = max(requested, minContentWidthPx)
-        return (stable * rectangleDrawer.currentScale).toInt()
+        return (stable * rectangleDrawer.state.currentScale).toInt()
     }
 
     /** Высота области рисования (без внутренних отступов) на базе текущего масштаба. */
     fun contentHeight(): Int {
         val requested = currentContentHeightPx ?: rectBaseHeightPx
         val stable = max(requested, minContentHeightPx)
-        return (stable * rectangleDrawer.currentScale).toInt()
+        return (stable * rectangleDrawer.state.currentScale).toInt()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -126,10 +121,10 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
         val measuredWidth = resolveSize(desiredWidth, widthMeasureSpec)
         val measuredHeight = resolveSize(desiredHeight, heightMeasureSpec)
 
-        val scaledValueWidth = (measuredWidth - measuredWidth / rectangleDrawer.currentScale).toInt()
+        val scaledValueWidth = (measuredWidth - measuredWidth / rectangleDrawer.state.currentScale).toInt()
         val scaledWidth = measuredWidth + scaledValueWidth
 
-        val scaledValueHeight = (measuredWidth - measuredWidth / rectangleDrawer.currentScale).toInt()
+        val scaledValueHeight = (measuredWidth - measuredWidth / rectangleDrawer.state.currentScale).toInt()
         val scaledHeight = measuredHeight + scaledValueHeight
 
         setMeasuredDimension(scaledWidth, scaledHeight)
@@ -150,12 +145,12 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: android.graphics.Rect?) {
         super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
-        rectangleDrawer.isFocused = gainFocus
+//        rectangleDrawer.state.isFocused = gainFocus
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         // Приводим цвет к актуальному состоянию фокуса
-        rectangleDrawer.isFocused = hasFocus()
+//        rectangleDrawer.state.isFocused = hasFocus()
     }
 }

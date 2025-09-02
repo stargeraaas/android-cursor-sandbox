@@ -1,4 +1,4 @@
-package dev.stargeras.sandbox
+package dev.stargeras.sandbox.drawers
 
 import android.content.Context
 import android.graphics.Canvas
@@ -9,9 +9,11 @@ import android.text.TextPaint
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
-import android.view.View.resolveSize
 import android.widget.TextView
 import androidx.core.graphics.withTranslation
+import dev.stargeras.sandbox.drawers.Drawer
+import dev.stargeras.sandbox.R
+import dev.stargeras.sandbox.TextStyle
 import kotlin.math.max
 import kotlin.math.min
 
@@ -47,7 +49,10 @@ class TitleSubtitleDrawer(
 
     /** Стиль текста подзаголовка */
     private var subtitleStyle: TextStyle =
-        TextStyle(R.style.TextAppearance_PC_Subtitle_Focused, R.style.TextAppearance_PC_Subtitle_Unfocused)
+        TextStyle(
+            R.style.TextAppearance_PC_Subtitle_Focused,
+            R.style.TextAppearance_PC_Subtitle_Unfocused
+        )
 
     /** Отступ между заголовком и подзаголовком (px) */
     var spacingBetweenTexts: Int = 8
@@ -113,8 +118,6 @@ class TitleSubtitleDrawer(
         heightMeasureSpec: Int,
         measured: (Int, Int) -> Unit
     ) {
-        Log.w("MEASURE", "TitleSubtitle::desiredWidth=$desiredWidth, desiredHeight=$heightMeasureSpec")
-
 
         val measuredWidth = desiredWidth + state.paddings.horizontal()
 
@@ -143,7 +146,8 @@ class TitleSubtitleDrawer(
         }
 
         titleLayout = makeLayout(state.title, titlePaint, state.maxTitleLines, contentWidth)
-        subtitleLayout = makeLayout(state.subtitle, subtitlePaint, state.maxSubtitleLines, contentWidth)
+        subtitleLayout =
+            makeLayout(state.subtitle, subtitlePaint, state.maxSubtitleLines, contentWidth)
     }
 
     private fun makeLayout(
@@ -172,13 +176,15 @@ class TitleSubtitleDrawer(
 
         // Ширина заголовка
         if (state.hasTitle()) {
-            val titleWidth = calculateTextWidth(state.title, titlePaint) + state.paddings.horizontal()
+            val titleWidth =
+                calculateTextWidth(state.title, titlePaint) + state.paddings.horizontal()
             maxWidth = max(maxWidth, titleWidth)
         }
 
         // Ширина подзаголовка
         if (state.hasSubtitle()) {
-            val subtitleWidth = calculateTextWidth(state.subtitle, subtitlePaint) + state.paddings.horizontal()
+            val subtitleWidth =
+                calculateTextWidth(state.subtitle, subtitlePaint) + state.paddings.horizontal()
             maxWidth = max(maxWidth, subtitleWidth)
         }
 
@@ -346,12 +352,12 @@ class TitleSubtitleDrawer(
 
     data class State(
         val title: String = "",
-        val subtitle: String ="",
+        val subtitle: String = "",
         val spacing: Int = 0,
         val maxTitleLines: Int = 1,
         val maxSubtitleLines: Int = 1,
         val isFocused: Boolean = false,
-        val paddings: Paddings = Paddings()
+        val paddings: Paddings = Paddings(0, 0, 0, 0)
     ) {
 
         fun hasTitle() = title.isNotEmpty()
@@ -366,15 +372,5 @@ class TitleSubtitleDrawer(
         val subtitleUnfocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     )
 
-    data class Paddings(
-        val top: Int = 32,
-        val right: Int =32,
-        val bottom: Int = 32,
-        val left: Int = 32
-    ) {
-        fun horizontal() = left + right
-
-        fun vertical() = top + bottom
-    }
 
 }
