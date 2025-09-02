@@ -146,8 +146,6 @@ open class BaseFocusableCanvasView @JvmOverloads constructor(
         val targetWidth = min(contentWidth().toFloat(), availableWidth)
         val targetHeight = min(contentHeight().toFloat(), availableHeight)
 
-        // Используем RectangleDrawer для отрисовки
-        rectangleDrawer.drawRectangle(canvas, availableWidth, availableHeight, targetWidth.toInt(), targetHeight.toInt())
     }
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: android.graphics.Rect?) {

@@ -27,7 +27,8 @@ class TitleSubtitleDrawer(
     private var titleLayout: StaticLayout? = null
     private var subtitleLayout: StaticLayout? = null
 
-    private var state: State = State()
+    var state: State = State()
+        private set
 
     fun updateState(newState: (State) -> State) {
         state = newState(state)
@@ -37,22 +38,6 @@ class TitleSubtitleDrawer(
             requestLayout()
         }
     }
-
-    /** Текст заголовка */
-    var titleText: String = ""
-        set(value) {
-            field = value
-            targetView.invalidate()
-            targetView.requestLayout()
-        }
-
-    /** Текст подзаголовка */
-    var subtitleText: String? = null
-        set(value) {
-            field = value
-            targetView.invalidate()
-            targetView.requestLayout()
-        }
 
     /** Стиль текста заголовка */
     private var titleStyle: TextStyle = TextStyle(
@@ -69,9 +54,6 @@ class TitleSubtitleDrawer(
 
     /** Минимальная ширина отрисовки (px) */
     var minWidth: Int = 0
-
-    /** Желаемая ширина отрисовки (px) */
-    private var desiredWidth: Int = 0
 
     private var paints = Paints()
 
@@ -127,12 +109,14 @@ class TitleSubtitleDrawer(
     }
 
     override fun measure(
-        widthMeasureSpec: Int,
+        desiredWidth: Int,
         heightMeasureSpec: Int,
         measured: (Int, Int) -> Unit
     ) {
-        val desiredWidth = widthMeasureSpec
-        val measuredWidth = resolveSize(desiredWidth, widthMeasureSpec) + state.paddings.horizontal()
+        Log.w("MEASURE", "TitleSubtitle::desiredWidth=$desiredWidth, desiredHeight=$heightMeasureSpec")
+
+
+        val measuredWidth = desiredWidth + state.paddings.horizontal()
 
         buildLayouts(measuredWidth)
 
@@ -143,7 +127,9 @@ class TitleSubtitleDrawer(
 
         val desiredHeight = titleHeight + spacing + subtitleHeight + state.paddings.vertical()
 
-        val measuredHeight = resolveSize(desiredHeight, desiredHeight)
+        val measuredHeight = desiredHeight
+
+        Log.i("MEASURE", "TitleSubtitle::width=$measuredWidth, height=$measuredHeight")
 
         measured.invoke(measuredWidth, measuredHeight)
     }
@@ -156,8 +142,8 @@ class TitleSubtitleDrawer(
             return
         }
 
-        titleLayout = makeLayout(titleText, titlePaint, state.maxTitleLines, contentWidth)
-        subtitleLayout = makeLayout(subtitleText, subtitlePaint, state.maxSubtitleLines, contentWidth)
+        titleLayout = makeLayout(state.title, titlePaint, state.maxTitleLines, contentWidth)
+        subtitleLayout = makeLayout(state.subtitle, subtitlePaint, state.maxSubtitleLines, contentWidth)
     }
 
     private fun makeLayout(
@@ -176,8 +162,6 @@ class TitleSubtitleDrawer(
             .build()
     }
 
-    // ---------- Методы вычисления размеров ----------
-
     /**
      * Вычисляет оптимальную ширину контента на основе текста и стилей.
      *
@@ -187,20 +171,20 @@ class TitleSubtitleDrawer(
         var maxWidth = 0f
 
         // Ширина заголовка
-        if (titleText.isNotEmpty()) {
-            val titleWidth = calculateTextWidth(titleText, titlePaint) + state.paddings.horizontal()
+        if (state.hasTitle()) {
+            val titleWidth = calculateTextWidth(state.title, titlePaint) + state.paddings.horizontal()
             maxWidth = max(maxWidth, titleWidth)
         }
 
         // Ширина подзаголовка
-        if (subtitleText?.isNotEmpty() == true) {
-            val subtitleWidth = calculateTextWidth(subtitleText!!, subtitlePaint) + state.paddings.horizontal()
+        if (state.hasSubtitle()) {
+            val subtitleWidth = calculateTextWidth(state.subtitle, subtitlePaint) + state.paddings.horizontal()
             maxWidth = max(maxWidth, subtitleWidth)
         }
 
         // Учитываем минимальную и желаемую ширину
         val optimalWidth = maxWidth.toInt()
-        return max(max(optimalWidth, minWidth), desiredWidth)
+        return max(optimalWidth, minWidth)
     }
 
     /**
@@ -247,11 +231,13 @@ class TitleSubtitleDrawer(
 
         // Если нет заголовка, возвращаем высоту контента равную нулю
         if (!state.hasTitle()) {
+            Log.e("TitleSubtitleCard", "calculateContentHeight: no title")
             return 0
         }
 
         // Высота заголовка
         val titleHeight = calculateTextHeight(state.title, titlePaint, width, state.maxTitleLines)
+        Log.e("TitleSubtitleCard", "titleHeight= $titleHeight")
         totalHeight += titleHeight
 
         // Отступ между текстами только если есть подзаголовок
@@ -262,6 +248,9 @@ class TitleSubtitleDrawer(
                 calculateTextHeight(state.subtitle, subtitlePaint, width, state.maxSubtitleLines)
             totalHeight += subtitleHeight
         }
+
+        Log.e("TitleSubtitleCard", "totalHeight= $totalHeight")
+
 
         return totalHeight.toInt()
     }
@@ -364,6 +353,7 @@ class TitleSubtitleDrawer(
         val isFocused: Boolean = false,
         val paddings: Paddings = Paddings()
     ) {
+
         fun hasTitle() = title.isNotEmpty()
 
         fun hasSubtitle() = subtitle.isNotEmpty()

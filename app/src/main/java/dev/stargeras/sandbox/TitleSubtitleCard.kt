@@ -31,8 +31,16 @@ class TitleSubtitleCard @JvmOverloads constructor(
 
         rectangleDrawer.focusScalePercent = 0.03f
 
-        titleSubtitleDrawer.titleText = "Title"
-        titleSubtitleDrawer.subtitleText = "Subtitle"
+        titleSubtitleDrawer.updateState { oldState ->
+            oldState.copy(
+                title = "Title",
+                subtitle = "Subtitle",
+                isFocused = false
+            )
+        }
+
+
+
         titleSubtitleDrawer.setTitleTextStyle(
             TextStyle(
                 R.style.TextAppearance_PC_Title_Focused,
@@ -49,18 +57,8 @@ class TitleSubtitleCard @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        Log.w(
-            "TitleSubtitleCard",
-            "onDraw\nwidth= $width height= $height \nrectangleWidthPx= $rectangleWidthPx\n" +
-                    "textWidth= ${titleSubtitleDrawer.getContentSize().first} textHeight= ${titleSubtitleDrawer.getContentSize().second}"
-        )
 
-        // Теперь View имеет размеры прямоугольника
-        // Прямоугольник заполняет всю View
-        rectangleDrawer.calculateCoordinates(width.toFloat(), height.toFloat(), width, height)
-
-        // Рисуем карточку прямоугольника
-        rectangleDrawer.drawRectangle(canvas)
+        rectangleDrawer.draw(canvas)
 
         titleSubtitleDrawer.draw(canvas)
     }
@@ -73,33 +71,30 @@ class TitleSubtitleCard @JvmOverloads constructor(
         val textHeight = titleSubtitleDrawer.getContentSize().second
         val desiredHeight = textHeight
 
-        val measuredWidth = resolveSize(desiredWidth, widthMeasureSpec)
+        var totalWidth = 0
+        var totalHeight = 0
 
-        // Учитываем масштабирование для анимации фокуса
-        val scaledValueWidth =
-            (measuredWidth - measuredWidth / rectangleDrawer.currentScale).toInt()
+        titleSubtitleDrawer.measure(desiredWidth, desiredHeight) { w, h ->
+            Log.e("MEASURE", "Measured TitleSubtitleDrawer: width=$w height=$h")
 
-
-        val scaledWidth = measuredWidth + scaledValueWidth
-
-
-        titleSubtitleDrawer.measure(desiredWidth, -1) { w, h ->
-            Log.e("TitleSubtitleCard", "Measured TitleSubtitleDrawer: width=$w height=$h")
-            val measuredHeight = resolveSize(desiredHeight, h)
-
-            val scaledValueHeight =
-                (measuredHeight - measuredHeight / rectangleDrawer.currentScale).toInt()
-            val scaledHeight = measuredHeight + scaledValueHeight
-
-            rectangleDrawer.measure(scaledWidth, scaledHeight) { w, h ->
+            rectangleDrawer.measure(rectangleWidthPx, h) { w, h ->
 
                 Log.e(
-                    "TitleSubtitleCard",
+                    "MEASURE",
                     "Measured RectangleDrawer: width=$w height=$h"
                 )
+
+                totalWidth = w
+                totalHeight = h
+
             }
-            setMeasuredDimension(scaledWidth, h)
+
         }
+
+        val measuredWidth = resolveSize(totalWidth, widthMeasureSpec)
+        val measuredHeight = resolveSize(totalHeight, heightMeasureSpec)
+
+        setMeasuredDimension(564, 200)
     }
 
     override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
