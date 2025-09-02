@@ -11,7 +11,6 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.withTranslation
-import dev.stargeras.sandbox.drawers.Drawer
 import dev.stargeras.sandbox.R
 import dev.stargeras.sandbox.TextStyle
 import kotlin.math.max
@@ -32,33 +31,20 @@ class TitleSubtitleDrawer(
     var state: State = State()
         private set
 
-    fun updateState(newState: (State) -> State) {
-        state = newState(state)
-
-        targetView.apply {
-            invalidate()
-            requestLayout()
-        }
-    }
-
-    /** Стиль текста заголовка */
-    private var titleStyle: TextStyle = TextStyle(
-        R.style.TextAppearance_PC_Title_Focused,
-        R.style.TextAppearance_PC_Title_Unfocused
-    )
-
-    /** Стиль текста подзаголовка */
-    private var subtitleStyle: TextStyle =
-        TextStyle(
+    var textStyles: TextStyles = TextStyles(
+        titleStyle = TextStyle(
+            R.style.TextAppearance_PC_Title_Focused,
+            R.style.TextAppearance_PC_Title_Unfocused
+        ),
+        subtitleStyle = TextStyle(
             R.style.TextAppearance_PC_Subtitle_Focused,
             R.style.TextAppearance_PC_Subtitle_Unfocused
         )
-
-    /** Отступ между заголовком и подзаголовком (px) */
-    var spacingBetweenTexts: Int = 8
-
-    /** Минимальная ширина отрисовки (px) */
-    var minWidth: Int = 0
+    )
+        private set(value) {
+            field = value
+            updateTitlePaint()
+        }
 
     private var paints = Paints()
 
@@ -70,24 +56,30 @@ class TitleSubtitleDrawer(
 
     private val styledTextView = TextView(context)
 
-    /**
-     * Устанавливает стиль для заголовка.
-     *
-     * @param textStyle объект TextStyle с параметрами стиля
-     */
-    fun setTitleTextStyle(textStyle: TextStyle) {
-        titleStyle = textStyle
+    init {
         updateTitlePaint()
     }
 
-    /**
-     * Устанавливает стиль для подзаголовка.
-     *
-     * @param textStyle объект TextStyle с параметрами стиля
-     */
-    fun setSubtitleTextStyle(textStyle: TextStyle) {
-        subtitleStyle = textStyle
+    /** Обновляет состояние в соответствии с новыми настройками. */
+    fun updateState(newState: (State) -> State) {
+        state = newState(state)
+
+        targetView.apply {
+            invalidate()
+            requestLayout()
+        }
+    }
+
+    /** Обновляет стили текста в соответствии с новыми настройками. */
+    fun updateTextStyles(newTextStyles: (TextStyles) -> TextStyles) {
+        textStyles = newTextStyles(textStyles)
+
         updateTitlePaint()
+
+        targetView.apply {
+            invalidate()
+            requestLayout()
+        }
     }
 
     override fun draw(canvas: Canvas) {
@@ -102,7 +94,7 @@ class TitleSubtitleDrawer(
         }
 
         if (titleLayout != null && subtitleLayout != null) {
-            y += spacingBetweenTexts
+            y += state.spacing
         }
 
         subtitleLayout?.let { layout ->
@@ -126,15 +118,13 @@ class TitleSubtitleDrawer(
         val titleHeight = titleLayout?.height ?: 0
         val subtitleHeight = subtitleLayout?.height ?: 0
 
-        val spacing = if (titleHeight > 0 && subtitleHeight > 0) spacingBetweenTexts else 0
+        val spacing = if (titleHeight > 0 && subtitleHeight > 0) state.spacing else 0
 
         val desiredHeight = titleHeight + spacing + subtitleHeight + state.paddings.vertical()
 
-        val measuredHeight = desiredHeight
+        Log.i("MEASURE", "TitleSubtitle::width=$measuredWidth, height=$desiredHeight")
 
-        Log.i("MEASURE", "TitleSubtitle::width=$measuredWidth, height=$measuredHeight")
-
-        measured.invoke(measuredWidth, measuredHeight)
+        measured.invoke(measuredWidth, desiredHeight)
     }
 
     private fun buildLayouts(availableWidth: Int) {
@@ -172,25 +162,24 @@ class TitleSubtitleDrawer(
      * @return оптимальная ширина в пикселях
      */
     fun calculateOptimalWidth(): Int {
-        var maxWidth = 0f
+        var maxWidth = 0
 
         // Ширина заголовка
         if (state.hasTitle()) {
             val titleWidth =
                 calculateTextWidth(state.title, titlePaint) + state.paddings.horizontal()
-            maxWidth = max(maxWidth, titleWidth)
+            maxWidth = max(maxWidth, titleWidth.toInt())
         }
 
         // Ширина подзаголовка
         if (state.hasSubtitle()) {
             val subtitleWidth =
                 calculateTextWidth(state.subtitle, subtitlePaint) + state.paddings.horizontal()
-            maxWidth = max(maxWidth, subtitleWidth)
+            maxWidth = max(maxWidth, subtitleWidth.toInt())
         }
 
-        // Учитываем минимальную и желаемую ширину
-        val optimalWidth = maxWidth.toInt()
-        return max(optimalWidth, minWidth)
+        // Вычисляем ширину контента между заголовком, подзаголовком и максимальной шириной
+        return max(maxWidth.toInt(), state.maxWidth)
     }
 
     /**
@@ -204,16 +193,20 @@ class TitleSubtitleDrawer(
         return paint.measureText(text)
     }
 
-    /**
-     * Вычисляет размеры контента для отрисовки.
-     *
-     * @return Pair<ширина, высота> в пикселях
-     */
-    fun getContentSize(): Pair<Int, Int> {
-        val width = calculateOptimalWidth()
+    /** Вычисляет высоту контента по содержимому. Заголовок, подзаголовок и отступ. */
+    fun getContentHeight(): Int {
+        val width = getContentWidth()
         val height = getContentHeight(width.toFloat())
-        Log.d("TitleSubtitleCard", "getContentSize: $width, $height")
-        return Pair(width, height)
+        return height
+    }
+
+    /** Вычисляет ширину контента по содержимому. */
+    fun getContentWidth(): Int {
+        return if (state.maxWidth <= 0) {
+            calculateOptimalWidth()
+        } else {
+            min(state.maxWidth, calculateOptimalWidth())
+        }
     }
 
     /**
@@ -235,32 +228,28 @@ class TitleSubtitleDrawer(
     private fun calculateContentHeight(width: Float): Int {
         var totalHeight = 0f
 
-        // Если нет заголовка, возвращаем высоту контента равную нулю
+        // Если нет заголовка, выбрасываем исключение
         if (!state.hasTitle()) {
-            Log.e("TitleSubtitleCard", "calculateContentHeight: no title")
-            return 0
+            return throw IllegalArgumentException("No title provided")
         }
 
         // Высота заголовка
-        val titleHeight = calculateTextHeight(state.title, titlePaint, width, state.maxTitleLines)
-        Log.e("TitleSubtitleCard", "titleHeight= $titleHeight")
-        totalHeight += titleHeight
+        totalHeight += calculateTextHeight(state.title, titlePaint, width, state.maxTitleLines)
 
-        // Отступ между текстами только если есть подзаголовок
-        if (state.hasSubtitle()) {
-            totalHeight += state.spacing
-
-            val subtitleHeight =
-                calculateTextHeight(state.subtitle, subtitlePaint, width, state.maxSubtitleLines)
-            totalHeight += subtitleHeight
-        }
-
-        Log.e("TitleSubtitleCard", "totalHeight= $totalHeight")
-
+        totalHeight += calculateSubtitleHeight(width)
 
         return totalHeight.toInt()
     }
 
+    /** Расчет высоты подзаголовка с учетом максимальной ширины. */
+    private fun calculateSubtitleHeight(width: Float): Float {
+        // Отступ между текстами только если есть подзаголовок
+        return if (state.hasSubtitle()) {
+            state.spacing + calculateTextHeight(state.subtitle, subtitlePaint, width, state.maxSubtitleLines)
+        } else {
+            0f
+        }
+    }
 
     /**
      * Вычисляет высоту текста с учетом стилей и ограничений.
@@ -307,27 +296,25 @@ class TitleSubtitleDrawer(
     }
 
 
-    /**
-     * Обновляет кисть для заголовка в соответствии с текущим стилем и состоянием фокуса.
-     */
+    /** Обновляет кисть для заголовка в соответствии с текущим стилем и состоянием фокуса. */
     private fun updateTitlePaint() {
         styledTextView.apply {
             updatePaints { oldState ->
                 oldState.copy(
                     titleFocused = applyStyleToTextPaint(
-                        titleStyle.styleFocused,
+                        textStyles.titleStyle.styleFocused,
                         paints.titleFocused
                     ),
                     titleUnfocused = applyStyleToTextPaint(
-                        titleStyle.styleUnfocused,
+                        textStyles.titleStyle.styleUnfocused,
                         paints.titleUnfocused
                     ),
                     subtitleFocused = applyStyleToTextPaint(
-                        subtitleStyle.styleFocused,
+                        textStyles.subtitleStyle.styleFocused,
                         paints.subtitleFocused
                     ),
                     subtitleUnfocused = applyStyleToTextPaint(
-                        subtitleStyle.styleUnfocused,
+                        textStyles.subtitleStyle.styleUnfocused,
                         paints.subtitleUnfocused
                     )
                 )
@@ -354,6 +341,7 @@ class TitleSubtitleDrawer(
         val title: String = "",
         val subtitle: String = "",
         val spacing: Int = 0,
+        val maxWidth: Int = 0,
         val maxTitleLines: Int = 1,
         val maxSubtitleLines: Int = 1,
         val isFocused: Boolean = false,
@@ -372,5 +360,9 @@ class TitleSubtitleDrawer(
         val subtitleUnfocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     )
 
+    data class TextStyles(
+        val titleStyle: TextStyle,
+        val subtitleStyle: TextStyle
+    )
 
 }

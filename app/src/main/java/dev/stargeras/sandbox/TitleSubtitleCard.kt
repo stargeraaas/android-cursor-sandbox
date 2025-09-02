@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import dev.stargeras.sandbox.drawers.Paddings
@@ -44,6 +43,7 @@ class TitleSubtitleCard @JvmOverloads constructor(
 
         titleSubtitleDrawer.updateState { oldState ->
             oldState.copy(
+                maxWidth = context.resources.getDimensionPixelSize(R.dimen.pc_max_content_width),
                 paddings = Paddings(
                     top = context.resources.getDimensionPixelSize(R.dimen.pc_vertical_padding),
                     right = context.resources.getDimensionPixelSize(R.dimen.pc_horizontal_padding),
@@ -52,31 +52,15 @@ class TitleSubtitleCard @JvmOverloads constructor(
                 )
             )
         }
-
-        titleSubtitleDrawer.setTitleTextStyle(
-            TextStyle(
-                R.style.TextAppearance_PC_Title_Focused,
-                R.style.TextAppearance_PC_Title_Unfocused
-            )
-        )
-        titleSubtitleDrawer.setSubtitleTextStyle(
-            TextStyle(
-                R.style.TextAppearance_PC_Subtitle_Focused,
-                R.style.TextAppearance_PC_Subtitle_Unfocused
-            )
-        )
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        Log.w("RectangleDrawer", "onTouch")
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                // Устанавливаем фокус при нажатии
                 requestFocus()
                 return false
             }
             MotionEvent.ACTION_UP -> {
-                // Вызываем performClick при отпускании
                 performClick()
                 return false
             }
@@ -93,20 +77,16 @@ class TitleSubtitleCard @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        // Ширина View = ширина прямоугольника (задана кодом)
-        val desiredWidth = rectangleWidthPx
-
-        // Высота View = высота текста (заголовок + подзаголовок + отступ)
-        val textHeight = titleSubtitleDrawer.getContentSize().second
-        val desiredHeight = textHeight
-
         var totalWidth = 0
         var totalHeight = 0
 
-        titleSubtitleDrawer.measure(desiredWidth, desiredHeight) { w, h ->
-            rectangleDrawer.measure(rectangleWidthPx, h) { w, h ->
-                totalWidth = w
-                totalHeight = h
+        // Вычисляем ширину и высоту для заголовка и подзаголовка
+        titleSubtitleDrawer.measure(rectangleWidthPx, titleSubtitleDrawer.getContentHeight()) { titleWidth, titleHeight ->
+            // Вычисляем ширину и высоту для прямоугольника по ширине и высоте заголовка и подзаголовка
+            rectangleDrawer.measure(rectangleWidthPx, titleHeight) { rectangleWidth, rectangleHeight ->
+                // Устанавливаем размеры View в соответствии с размерами прямоугольника
+                totalWidth = rectangleWidth
+                totalHeight = rectangleHeight
             }
         }
 
@@ -126,6 +106,7 @@ class TitleSubtitleCard @JvmOverloads constructor(
         updateFocusState(isFocused)
     }
 
+    /** Обновление состояния фокуса */
     private fun updateFocusState(gainFocus: Boolean) {
         updateState { oldState -> oldState.copy(isFocused = gainFocus) }
     }
@@ -148,10 +129,10 @@ class TitleSubtitleCard @JvmOverloads constructor(
         }
     }
 
+    /** Класс состояния текущей View */
     data class State(
         val title: String = "",
         val subtitle: String = "",
         val isFocused: Boolean = false
     )
-
 }
