@@ -7,8 +7,9 @@ import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.View
-import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import dev.stargeras.sandbox.views.utils.HorizontalAlignment
+import dev.stargeras.sandbox.views.utils.VerticalAlignment
 import kotlin.math.max
 import kotlin.math.min
 
@@ -16,7 +17,7 @@ import kotlin.math.min
  * Drawer для отрисовки ресурсов (drawable) на canvas с поддержкой ScaleType, размеров и отступов.
  * Аналогичен ImageView по функциональности масштабирования.
  */
-class ResourceDrawer(
+class ImageDrawer(
     private val context: Context,
     private val targetView: View
 ) : Drawer {
@@ -39,19 +40,6 @@ class ResourceDrawer(
         CENTER_CROP_BOTTOM
     }
 
-    /**
-     * Вертикальное выравнивание
-     */
-    enum class VerticalAlignment {
-        TOP, CENTER, BOTTOM
-    }
-
-    /**
-     * Горизонтальное выравнивание
-     */
-    enum class HorizontalAlignment {
-        LEFT, CENTER, RIGHT
-    }
 
     /**
      * Состояние ResourceDrawer
@@ -331,10 +319,6 @@ class ResourceDrawer(
     override fun measure(desiredWidth: Int, desiredHeight: Int): Drawer.MeasureResult {
         val drawable = drawable
 
-//        updateState { oldState -> oldState.copy(
-//            width = desiredWidth, height = desiredHeight
-//        ) }
-
         if (drawable == null) {
             // Если drawable не загружен, используем минимальные размеры
             val totalWidth = state.paddings.horizontal()
@@ -398,8 +382,6 @@ class ResourceDrawer(
         // Добавляем отступы к финальным размерам
         val totalWidth = finalWidth + state.paddings.horizontal()
         val totalHeight = finalHeight + state.paddings.vertical()
-
-
 
         return Drawer.MeasureResult(totalWidth, totalHeight)
     }

@@ -11,8 +11,10 @@ import android.view.MotionEvent
 import android.view.View
 import dev.stargeras.sandbox.drawers.Paddings
 import dev.stargeras.sandbox.drawers.RectangleDrawer
-import dev.stargeras.sandbox.drawers.ResourceDrawer
+import dev.stargeras.sandbox.drawers.ImageDrawer
 import dev.stargeras.sandbox.drawers.TitleSubtitleDrawer
+import dev.stargeras.sandbox.views.utils.HorizontalAlignment
+import dev.stargeras.sandbox.views.utils.VerticalAlignment
 
 
 class ToggleView @JvmOverloads constructor(
@@ -25,7 +27,7 @@ class ToggleView @JvmOverloads constructor(
 
     private val titleSubtitleDrawer by lazy { TitleSubtitleDrawer(context, this) }
 
-    private val toggleDrawer by lazy { ResourceDrawer(context, this) }
+    private val toggleDrawer by lazy { ImageDrawer(context, this) }
 
     private val rectangleWidthPx: Int =
         context.resources.getDimensionPixelSize(R.dimen.pc_min_content_width)
@@ -55,12 +57,11 @@ class ToggleView @JvmOverloads constructor(
                     bottom = 0,
                     left = 0
                 ),
-                verticalAlignment = ResourceDrawer.VerticalAlignment.CENTER,
-                horizontalAlignment = ResourceDrawer.HorizontalAlignment.RIGHT,
-                scaleType = ResourceDrawer.ScaleType.CENTER_CROP
+                verticalAlignment = VerticalAlignment.CENTER,
+                horizontalAlignment = HorizontalAlignment.RIGHT,
+                scaleType = ImageDrawer.ScaleType.CENTER_CROP
             )
         }
-
 
 
         titleSubtitleDrawer.updateState { oldState ->
@@ -203,8 +204,8 @@ class ToggleView @JvmOverloads constructor(
             oldState.copy(
                 focusedResourceId = internalState.focusedCheckedResourceId,
                 unfocusedResourceId = internalState.unfocusedCheckedResourceId,
-                verticalAlignment = ResourceDrawer.VerticalAlignment.CENTER,
-                horizontalAlignment = ResourceDrawer.HorizontalAlignment.RIGHT,
+                verticalAlignment = VerticalAlignment.CENTER,
+                horizontalAlignment = HorizontalAlignment.RIGHT,
                 isFocused = state.isFocused
             )
         }

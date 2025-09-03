@@ -38,12 +38,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Настраиваем второй ToggleView
+        // Настраиваем NavigationView
         findViewById<NavigationView>(R.id.navigationView).apply {
             updateState { oldState ->
                 oldState.copy(
-                    title = "Настроить",
-                    isChecked = true
+                    title = "Настроить"
                 )
             }
         }

@@ -9,8 +9,10 @@ import android.view.View
 import dev.stargeras.sandbox.R
 import dev.stargeras.sandbox.drawers.Paddings
 import dev.stargeras.sandbox.drawers.RectangleDrawer
-import dev.stargeras.sandbox.drawers.ResourceDrawer
+import dev.stargeras.sandbox.drawers.ImageDrawer
 import dev.stargeras.sandbox.drawers.TitleSubtitleDrawer
+import dev.stargeras.sandbox.views.utils.HorizontalAlignment
+import dev.stargeras.sandbox.views.utils.VerticalAlignment
 
 class NavigationView @JvmOverloads constructor(
     context: Context,
@@ -22,7 +24,7 @@ class NavigationView @JvmOverloads constructor(
 
     private val titleSubtitleDrawer by lazy { TitleSubtitleDrawer(context, this) }
 
-    private val arrowDrawer by lazy { ResourceDrawer(context, this) }
+    private val arrowDrawer by lazy { ImageDrawer(context, this) }
 
     private val rectangleWidthPx: Int =
         context.resources.getDimensionPixelSize(R.dimen.pc_min_content_width)
@@ -50,9 +52,9 @@ class NavigationView @JvmOverloads constructor(
                     bottom = 0,
                     left = 0
                 ),
-                verticalAlignment = ResourceDrawer.VerticalAlignment.CENTER,
-                horizontalAlignment = ResourceDrawer.HorizontalAlignment.RIGHT,
-                scaleType = ResourceDrawer.ScaleType.CENTER_CROP
+                verticalAlignment = VerticalAlignment.CENTER,
+                horizontalAlignment = HorizontalAlignment.RIGHT,
+                scaleType = ImageDrawer.ScaleType.CENTER_CROP
             )
         }
 
@@ -107,6 +109,13 @@ class NavigationView @JvmOverloads constructor(
             measuredTitle.height
         )
 
+        titleSubtitleDrawer.updateState { oldState ->
+            oldState.copy(
+                parentWidth = measuredRectangle.width,
+                parentHeight = measuredRectangle.height
+            )
+        }
+
         // Отрисовка переключателя
         arrowDrawer.apply {
             updateState { oldState ->
@@ -158,7 +167,8 @@ class NavigationView @JvmOverloads constructor(
             oldState.copy(
                 title = state.title,
                 subtitle = state.subtitle,
-                isFocused = state.isFocused
+                isFocused = state.isFocused,
+                verticalAlignment = VerticalAlignment.CENTER
             )
         }
 
@@ -166,8 +176,8 @@ class NavigationView @JvmOverloads constructor(
             oldState.copy(
                 focusedResourceId = internalState.focusedNavigationIconRes,
                 unfocusedResourceId = internalState.unfocusedNavigationIconRes,
-                verticalAlignment = ResourceDrawer.VerticalAlignment.CENTER,
-                horizontalAlignment = ResourceDrawer.HorizontalAlignment.RIGHT,
+                verticalAlignment = VerticalAlignment.CENTER,
+                horizontalAlignment = HorizontalAlignment.RIGHT,
                 isFocused = state.isFocused
             )
         }
@@ -177,8 +187,7 @@ class NavigationView @JvmOverloads constructor(
     data class State(
         val title: String = "",
         val subtitle: String = "",
-        val isFocused: Boolean = false,
-        val isChecked: Boolean = false
+        val isFocused: Boolean = false
     )
 
     private data class InternalState(

@@ -103,6 +103,9 @@ class RectangleDrawer(
             )
         }
 
+
+        Log.v("getMeasuredHeightWithoutPaddings", "coordinates: $coordinates")
+
     }
 
 

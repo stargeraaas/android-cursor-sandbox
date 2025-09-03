@@ -10,9 +10,10 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.core.graphics.withTranslation
 import dev.stargeras.sandbox.R
 import dev.stargeras.sandbox.TextStyle
+import dev.stargeras.sandbox.views.utils.HorizontalAlignment
+import dev.stargeras.sandbox.views.utils.VerticalAlignment
 import kotlin.math.max
 import kotlin.math.min
 
@@ -85,13 +86,31 @@ class TitleSubtitleDrawer(
     }
 
     override fun draw(canvas: Canvas) {
-        var y = state.paddings.top.toFloat()
-        val x = state.paddings.left.toFloat()
+
+        var y = if (state.verticalAlignment == VerticalAlignment.CENTER) {
+            calculateVerticalOffset(state.parentHeight, getMeasuredHeightWithoutPaddings())
+        } else {
+            state.paddings.top.toFloat()
+        }
+
+        Log.w("getMeasuredHeightWithoutPaddings", "draw y= $y")
+
+
+        var x = if (state.horizontalAlignment == HorizontalAlignment.CENTER) {
+            0f
+        } else {
+            state.paddings.left.toFloat()
+        }
 
         titleLayout?.let { layout ->
-            canvas.withTranslation(x, y) {
-                layout.draw(this)
-            }
+            val layoutWidth = layout.width
+            val layoutHeight = layout.height
+
+            canvas.save()
+            canvas.translate(x, y)
+            layout.draw(canvas)
+            canvas.restore()
+
             y += layout.height
         }
 
@@ -100,11 +119,30 @@ class TitleSubtitleDrawer(
         }
 
         subtitleLayout?.let { layout ->
+            val layoutWidth = layout.width
+            val layoutHeight = layout.height
+
             canvas.save()
             canvas.translate(x, y)
             layout.draw(canvas)
             canvas.restore()
         }
+    }
+
+    private fun getMeasuredHeightWithoutPaddings(): Int {
+        var height = 0
+
+        height += titleLayout?.height ?: 0
+        height += subtitleLayout?.height ?: 0
+        height +=  if (subtitleLayout?.height == 0) 0 else state.spacing
+
+        return height.apply {
+            Log.d("getMeasuredHeightWithoutPaddings", "height = $height")
+        }
+    }
+
+    private fun getMeasuredWidthWithoutPaddings(): Float {
+        return state.parentWidth.toFloat()
     }
 
     override fun measure(desiredWidth: Int, heightMeasureSpec: Int): Drawer.MeasureResult {
@@ -122,6 +160,77 @@ class TitleSubtitleDrawer(
         return Drawer.MeasureResult(measuredWidth, desiredHeight)
     }
 
+    /**
+     * Вычисляет горизонтальную позицию в зависимости от выравнивания и размера родителя
+     */
+    private fun calculateHorizontalPosition(availableWidth: Int, contentWidth: Float): Float {
+        return when (state.horizontalAlignment) {
+            HorizontalAlignment.LEFT -> {
+                if (state.parentWidth > 0) {
+                    // Если указан размер родителя, позиционируем относительно него
+                    state.paddings.left.toFloat()
+                } else {
+                    // Иначе используем доступную ширину View
+                    state.paddings.left.toFloat()
+                }
+            }
+            HorizontalAlignment.CENTER -> {
+                if (state.parentWidth > 0) {
+                    // Центрируем относительно родительского контейнера
+                    (state.parentWidth - contentWidth) / 2
+                } else {
+                    // Центрируем относительно доступной области View
+                    state.paddings.left + (availableWidth - contentWidth) / 2
+                }
+            }
+            HorizontalAlignment.RIGHT -> {
+                if (state.parentWidth > 0) {
+                    // Позиционируем по правому краю родительского контейнера
+                    state.parentWidth - contentWidth - state.paddings.right
+                } else {
+                    // Позиционируем по правому краю доступной области View
+                    state.paddings.left + (availableWidth - contentWidth)
+                }
+            }
+        }
+    }
+
+    /**
+     * Вычисляет вертикальную позицию в зависимости от выравнивания и размера родителя
+     */
+    private fun calculateVerticalPosition(availableHeight: Int, contentHeight: Float): Float {
+
+        return when (state.verticalAlignment) {
+            VerticalAlignment.TOP -> {
+                if (state.parentHeight > 0) {
+                    // Если указан размер родителя, позиционируем относительно него
+                    state.paddings.top.toFloat()
+                } else {
+                    // Иначе используем доступную высоту View
+                    state.paddings.top.toFloat()
+                }
+            }
+            VerticalAlignment.CENTER -> {
+                if (state.parentHeight > 0) {
+                    // Центрируем относительно родительского контейнера
+                    (state.parentHeight - contentHeight) / 2
+                } else {
+                    // Центрируем относительно доступной области View
+                    state.paddings.top + (availableHeight - contentHeight) / 2
+                }
+            }
+            VerticalAlignment.BOTTOM -> {
+                if (state.parentHeight > 0) {
+                    // Позиционируем по нижнему краю родительского контейнера
+                    state.parentHeight - contentHeight - state.paddings.bottom
+                } else {
+                    // Позиционируем по нижнему краю доступной области View
+                    state.paddings.top + (availableHeight - contentHeight)
+                }
+            }
+        }
+    }
+
     private fun buildLayouts(availableWidth: Int) {
         val contentWidth = availableWidth
         if (contentWidth <= 0) {
@@ -131,8 +240,12 @@ class TitleSubtitleDrawer(
         }
 
         titleLayout = makeLayout(state.title, titlePaint, state.maxTitleLines, contentWidth)
-        subtitleLayout =
-            makeLayout(state.subtitle, subtitlePaint, state.maxSubtitleLines, contentWidth)
+
+        if (state.hasSubtitle()) {
+            subtitleLayout =
+                makeLayout(state.subtitle, subtitlePaint, state.maxSubtitleLines, contentWidth)
+        }
+
     }
 
     private fun makeLayout(
@@ -317,6 +430,24 @@ class TitleSubtitleDrawer(
         }
     }
 
+    private fun calculateHorizontalOffset(layoutWidth: Int, contentWidth: Int): Float {
+        return when (state.horizontalAlignment) {
+            HorizontalAlignment.LEFT -> 0f
+            HorizontalAlignment.CENTER -> (contentWidth - layoutWidth) / 2f
+            HorizontalAlignment.RIGHT -> (contentWidth - layoutWidth).toFloat()
+        }
+    }
+
+    private fun calculateVerticalOffset(parentHeight: Int, viewHeight: Int): Float {
+        return when (state.verticalAlignment) {
+            VerticalAlignment.TOP -> 0f
+            VerticalAlignment.CENTER -> (parentHeight/2 - viewHeight/2).toFloat()
+            VerticalAlignment.BOTTOM -> parentHeight.toFloat()
+        }.apply {
+            Log.i("getMeasuredHeightWithoutPaddings", "verticalOffset = $this parentHeight = $parentHeight viewHeight = $viewHeight")
+        }
+    }
+
     private fun TextView.applyStyleToTextPaint(styleId: Int, paint: TextPaint): TextPaint {
         setTextAppearance(styleId)
 
@@ -340,13 +471,22 @@ class TitleSubtitleDrawer(
         val maxTitleLines: Int = 1,
         val maxSubtitleLines: Int = 1,
         val isFocused: Boolean = false,
-        val paddings: Paddings = Paddings(0, 0, 0, 0)
+        val parentWidth: Int = 0,
+        val parentHeight: Int = 0,
+        val paddings: Paddings = Paddings(0, 0, 0, 0),
+        val verticalAlignment: VerticalAlignment = VerticalAlignment.TOP,
+        val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.LEFT
     ) {
 
         fun hasTitle() = title.isNotEmpty()
 
         fun hasSubtitle() = subtitle.isNotEmpty()
     }
+
+    private data class InternalState(
+        val parentWidth: Int = 0,
+        val parentHeight: Int = 0,
+    )
 
     private data class Paints(
         val titleFocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG),
