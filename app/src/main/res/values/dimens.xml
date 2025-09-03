@@ -7,7 +7,7 @@
 
     <!-- BaseFocusableCanvasView defaults -->
     <dimen name="pc_min_content_width">412dp</dimen>
-    <dimen name="pc_max_content_width">412dp</dimen>
+    <dimen name="pc_max_content_width">392dp</dimen>
     <dimen name="pc_min_content_height">60dp</dimen>
     <dimen name="pc_corner_radius">16dp</dimen>
 
@@ -25,4 +25,7 @@
 
     <dimen name="pc_toggle_width">44dp</dimen>
     <dimen name="pc_toggle_height">28dp</dimen>
+
+    <dimen name="pc_navigation_icon_width">12dp</dimen>
+    <dimen name="pc_navigation_icon_height">20dp</dimen>
 </resources>

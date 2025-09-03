@@ -6,8 +6,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import dev.stargeras.sandbox.drawers.Paddings
-import dev.stargeras.sandbox.drawers.ResourceDrawer
+import dev.stargeras.sandbox.views.NavigationView
 import dev.stargeras.sandbox.views.ToggleView
 
 class MainActivity : AppCompatActivity() {
@@ -40,11 +39,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Настраиваем второй ToggleView
-        findViewById<ToggleView>(R.id.navigationView2).apply {
+        findViewById<NavigationView>(R.id.navigationView).apply {
             updateState { oldState ->
                 oldState.copy(
-                    title = "Toggle 2",
-                    subtitle = "Click to toggle state",
+                    title = "Настроить",
                     isChecked = true
                 )
             }
