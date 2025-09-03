@@ -31,7 +31,23 @@
         <dev.stargeras.sandbox.TitleSubtitleCard
             android:id="@+id/titleSubtitleCard2"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ToggleView с FIT_CENTER -->
+        <dev.stargeras.sandbox.views.ToggleView
+            android:id="@+id/navigationView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp" />
+
+        <!-- ToggleView с CENTER_CROP -->
+        <dev.stargeras.sandbox.views.ToggleView
+            android:id="@+id/navigationView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

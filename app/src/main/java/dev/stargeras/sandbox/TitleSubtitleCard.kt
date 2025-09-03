@@ -77,21 +77,13 @@ class TitleSubtitleCard @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        var totalWidth = 0
-        var totalHeight = 0
-
         // Вычисляем ширину и высоту для заголовка и подзаголовка
-        titleSubtitleDrawer.measure(rectangleWidthPx, titleSubtitleDrawer.getContentHeight()) { titleWidth, titleHeight ->
-            // Вычисляем ширину и высоту для прямоугольника по ширине и высоте заголовка и подзаголовка
-            rectangleDrawer.measure(rectangleWidthPx, titleHeight) { rectangleWidth, rectangleHeight ->
-                // Устанавливаем размеры View в соответствии с размерами прямоугольника
-                totalWidth = rectangleWidth
-                totalHeight = rectangleHeight
-            }
-        }
+        val measuredTitle = titleSubtitleDrawer.measure(rectangleWidthPx, titleSubtitleDrawer.getContentHeight())
 
-        val measuredWidth = resolveSize(totalWidth, widthMeasureSpec)
-        val measuredHeight = resolveSize(totalHeight, heightMeasureSpec)
+        val measuredRectangle = rectangleDrawer.measure(rectangleWidthPx, measuredTitle.height)
+
+        val measuredWidth = resolveSize(measuredRectangle.width, widthMeasureSpec)
+        val measuredHeight = resolveSize(measuredRectangle.height, heightMeasureSpec)
 
         setMeasuredDimension(measuredWidth, measuredHeight)
     }

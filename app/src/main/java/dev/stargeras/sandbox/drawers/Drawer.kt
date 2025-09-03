@@ -6,5 +6,7 @@ import android.graphics.Canvas
 interface Drawer {
     fun draw(canvas: Canvas)
 
-    fun measure(desiredWidth: Int, desiredHeight: Int, measured: (Int, Int) -> Unit)
+    fun measure(desiredWidth: Int, desiredHeight: Int): MeasureResult
+
+    data class MeasureResult(val width: Int, val height: Int)
 }

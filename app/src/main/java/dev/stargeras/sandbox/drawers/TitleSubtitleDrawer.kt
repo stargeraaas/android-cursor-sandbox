@@ -31,7 +31,7 @@ class TitleSubtitleDrawer(
     var state: State = State()
         private set
 
-    var textStyles: TextStyles = TextStyles(
+    private var textStyles: TextStyles = TextStyles(
         titleStyle = TextStyle(
             R.style.TextAppearance_PC_Title_Focused,
             R.style.TextAppearance_PC_Title_Unfocused
@@ -41,7 +41,7 @@ class TitleSubtitleDrawer(
             R.style.TextAppearance_PC_Subtitle_Unfocused
         )
     )
-        private set(value) {
+        set(value) {
             field = value
             updateTitlePaint()
         }
@@ -63,6 +63,8 @@ class TitleSubtitleDrawer(
     /** Обновляет состояние в соответствии с новыми настройками. */
     fun updateState(newState: (State) -> State) {
         state = newState(state)
+
+        updateTitlePaint()
 
         targetView.apply {
             invalidate()
@@ -105,12 +107,7 @@ class TitleSubtitleDrawer(
         }
     }
 
-    override fun measure(
-        desiredWidth: Int,
-        heightMeasureSpec: Int,
-        measured: (Int, Int) -> Unit
-    ) {
-
+    override fun measure(desiredWidth: Int, heightMeasureSpec: Int): Drawer.MeasureResult {
         val measuredWidth = desiredWidth + state.paddings.horizontal()
 
         buildLayouts(measuredWidth)
@@ -122,9 +119,7 @@ class TitleSubtitleDrawer(
 
         val desiredHeight = titleHeight + spacing + subtitleHeight + state.paddings.vertical()
 
-        Log.i("MEASURE", "TitleSubtitle::width=$measuredWidth, height=$desiredHeight")
-
-        measured.invoke(measuredWidth, desiredHeight)
+        return Drawer.MeasureResult(measuredWidth, desiredHeight)
     }
 
     private fun buildLayouts(availableWidth: Int) {

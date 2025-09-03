@@ -22,4 +22,7 @@
     <dimen name="pc_padding_bottom">8dp</dimen>
     <dimen name="pc_padding_start">8dp</dimen>
     <dimen name="pc_padding_end">8dp</dimen>
+
+    <dimen name="pc_toggle_width">44dp</dimen>
+    <dimen name="pc_toggle_height">28dp</dimen>
 </resources>

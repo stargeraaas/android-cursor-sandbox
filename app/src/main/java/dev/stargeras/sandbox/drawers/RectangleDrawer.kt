@@ -11,6 +11,7 @@ import android.view.View
 import androidx.annotation.ColorInt
 import dev.stargeras.sandbox.drawers.Drawer
 import dev.stargeras.sandbox.R
+import dev.stargeras.sandbox.drawers.Drawer.MeasureResult
 
 /**
  * Класс для отрисовки прямоугольника с настраиваемыми параметрами и анимацией.
@@ -22,7 +23,9 @@ class RectangleDrawer(
 ) : Drawer {
 
     var state: State = State(
-        0, 0, context.resources.getDimension(R.dimen.pc_corner_radius),
+        desiredWidth = 0,
+        desiredHeight = 0,
+        cornerRadiusPx = context.resources.getDimension(R.dimen.pc_corner_radius),
         focusScalePercent = 0.03f,
         colors = RectangleColors(
             colorFocused = context.resources.getColor(R.color.pc_color_focused, context.theme),
@@ -50,9 +53,9 @@ class RectangleDrawer(
         val oldState = state
         val newState = newState.invoke(oldState)
 
-        paint.color = getPaintColor()
-
         state = newState
+
+        paint.color = getPaintColor()
 
         if (oldState.isFocused == newState.isFocused) {
             // Если состояние фокуса не изменилось, просто пересчитываем координаты
@@ -75,9 +78,10 @@ class RectangleDrawer(
      */
     private fun calculateCoordinates() {
         // Вычисляем координаты для центрирования
-        // Прямоугольник должен быть центрирован в доступной области View
-        val viewWidth = targetView.width
-        val viewHeight = targetView.height
+        val viewWidth = state.width
+        val viewHeight = state.height
+
+        Log.v("TitleSubtitleDrawer", "RECTANGLE: calculateCoordinates: width= ${targetView.width}, height= ${targetView.height}")
 
         val leftX = -state.scaledWidthPaddingValue()
         val topY = -state.scaledHeightPaddingValue()
@@ -152,6 +156,8 @@ class RectangleDrawer(
         // Обновляем цвет в зависимости от состояния фокуса
         paint.color = getPaintColor()
 
+        Log.e("TitleSubtitleDrawer", "RECTANGLE: draw: coordinates= $coordinates")
+
         coordinates.apply {
             // Рисуем прямоугольник используя кэшированные координаты
             canvas.drawRoundRect(
@@ -166,19 +172,7 @@ class RectangleDrawer(
         }
     }
 
-    override fun measure(
-        desiredWidth: Int,
-        desiredHeight: Int,
-        measured: (Int, Int) -> Unit
-    ) {
-
-        updateState { oldState ->
-            oldState.copy(
-                desiredWidth = desiredWidth,
-                desiredHeight = desiredHeight
-            )
-        }
-
+    override fun measure(desiredWidth: Int, desiredHeight: Int): MeasureResult {
         // Вычисляем размеры с учетом масштаба
         val scaledValueWidth = state.scaledWidthPaddingValue()
         val scaledValueHeight = state.scaledHeightPaddingValue()
@@ -186,10 +180,18 @@ class RectangleDrawer(
         val totalWidth = desiredWidth + scaledValueWidth
         val totalHeight = desiredHeight + scaledValueHeight
 
+        updateState { oldState ->
+            oldState.copy(
+                desiredWidth = totalWidth,
+                desiredHeight = totalHeight
+            )
+        }
+
         // Вычисляем координаты для центрирования
         calculateCoordinates()
+        Log.e("TitleSubtitleDrawer", "RECTANGLE: measure: $totalWidth x $totalHeight")
 
-        measured.invoke(totalWidth, totalHeight)
+        return MeasureResult(totalWidth, totalHeight)
     }
 
     /**
