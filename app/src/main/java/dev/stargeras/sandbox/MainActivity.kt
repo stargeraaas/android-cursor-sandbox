@@ -2,6 +2,7 @@ package dev.stargeras.sandbox
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -21,11 +22,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.titleSubtitleCard).requestFocus()
-        
+
         // Демонстрация работы ToggleView
         setupToggleViews()
     }
-    
+
     private fun setupToggleViews() {
         // Настраиваем первый ToggleView
         findViewById<ToggleView>(R.id.navigationView1).apply {
@@ -36,6 +37,13 @@ class MainActivity : AppCompatActivity() {
                     isChecked = false
                 )
             }
+
+            toggleStateListener = object : ToggleView.ToggleStateListener {
+                override fun onToggleStateChange(isChecked: Boolean) {
+                    Toast.makeText(this@MainActivity, "Toggle 1 state changed to $isChecked", Toast.LENGTH_SHORT).show()
+                }
+            }
+
         }
 
         // Настраиваем NavigationView

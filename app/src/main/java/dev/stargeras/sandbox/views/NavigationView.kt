@@ -2,14 +2,11 @@ package dev.stargeras.sandbox.views
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Rect
 import android.util.AttributeSet
-import android.view.MotionEvent
-import android.view.View
 import dev.stargeras.sandbox.R
+import dev.stargeras.sandbox.drawers.ImageDrawer
 import dev.stargeras.sandbox.drawers.Paddings
 import dev.stargeras.sandbox.drawers.RectangleDrawer
-import dev.stargeras.sandbox.drawers.ImageDrawer
 import dev.stargeras.sandbox.drawers.TitleSubtitleDrawer
 import dev.stargeras.sandbox.views.utils.HorizontalAlignment
 import dev.stargeras.sandbox.views.utils.VerticalAlignment
@@ -17,34 +14,32 @@ import dev.stargeras.sandbox.views.utils.VerticalAlignment
 class NavigationView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr) {
+    defStyleAttr: Int = 0,
+) : BaseCanvasView(context, attrs, defStyleAttr) {
 
-    private val rectangleDrawer by lazy { RectangleDrawer(context, this) }
+    private val backgroundCardDrawer by lazy { RectangleDrawer(context, this) }
 
-    private val titleSubtitleDrawer by lazy { TitleSubtitleDrawer(context, this) }
+    private val textDrawer by lazy { TitleSubtitleDrawer(context, this) }
 
-    private val arrowDrawer by lazy { ImageDrawer(context, this) }
-
-    private val rectangleWidthPx: Int =
-        context.resources.getDimensionPixelSize(R.dimen.pc_min_content_width)
+    private val arrowImageDrawer by lazy { ImageDrawer(context, this) }
 
     var state: State = State()
         private set
 
-    private var internalState: InternalState = InternalState(
-        focusedNavigationIconRes = R.drawable.img_right_arrow_focused,
-        unfocusedNavigationIconRes = R.drawable.img_right_arrow_unfocused,
+    override var viewState: ViewState = ViewState(
+        size = Size(
+            width = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_width),
+            height = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_height)
+        ),
+        isFocused = false
     )
 
+    private var internalState: InternalState = InternalState()
+
     init {
-        isFocusable = true
-        isFocusableInTouchMode = true
-        defaultFocusHighlightEnabled = false
+        backgroundCardDrawer.updateState { oldState -> oldState.copy(focusScalePercent = 0.03f) }
 
-        rectangleDrawer.updateState { oldState -> oldState.copy(focusScalePercent = 0.03f) }
-
-        arrowDrawer.updateState { oldState ->
+        arrowImageDrawer.updateState { oldState ->
             oldState.copy(
                 paddings = Paddings(
                     top = 0,
@@ -54,11 +49,10 @@ class NavigationView @JvmOverloads constructor(
                 ),
                 verticalAlignment = VerticalAlignment.CENTER,
                 horizontalAlignment = HorizontalAlignment.RIGHT,
-                scaleType = ImageDrawer.ScaleType.CENTER_CROP
             )
         }
 
-        titleSubtitleDrawer.updateState { oldState ->
+        textDrawer.updateState { oldState ->
             oldState.copy(
                 maxWidth = context.resources.getDimensionPixelSize(R.dimen.pc_max_content_width),
                 paddings = Paddings(
@@ -71,45 +65,30 @@ class NavigationView @JvmOverloads constructor(
         }
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                requestFocus()
-                return false
-            }
-
-            MotionEvent.ACTION_UP -> {
-                performClick()
-                return false
-            }
-        }
-        return super.onTouchEvent(event)
-    }
-
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
-        rectangleDrawer.draw(canvas)
-
-        titleSubtitleDrawer.draw(canvas)
-
-        arrowDrawer.draw(canvas)
+        // Отрисовка карточки
+        backgroundCardDrawer.draw(canvas)
+        // Отрисовка текста
+        textDrawer.draw(canvas)
+        // Отрисовка стрелки
+        arrowImageDrawer.draw(canvas)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // Вычисляем ширину и высоту для заголовка и подзаголовка
-        val measuredTitle = titleSubtitleDrawer.measure(
-            rectangleWidthPx,
-            titleSubtitleDrawer.getContentHeight()
+        val measuredTitle = textDrawer.measure(
+            desiredWidth = viewState.size.width,
+            desiredHeight = textDrawer.getContentHeight()
         )
 
         // Вычисляем ширину и высоту для прямоугольника по ширине и высоте заголовка и подзаголовка
-        val measuredRectangle = rectangleDrawer.measure(
-            rectangleWidthPx,
-            measuredTitle.height
+        val measuredRectangle = backgroundCardDrawer.measure(
+            desiredWidth = viewState.size.width,
+            desiredHeight = measuredTitle.height
         )
 
-        titleSubtitleDrawer.updateState { oldState ->
+        textDrawer.updateState { oldState ->
             oldState.copy(
                 parentWidth = measuredRectangle.width,
                 parentHeight = measuredRectangle.height
@@ -117,12 +96,12 @@ class NavigationView @JvmOverloads constructor(
         }
 
         // Отрисовка переключателя
-        arrowDrawer.apply {
+        arrowImageDrawer.apply {
             updateState { oldState ->
                 oldState.copy(
                     width = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_width),
                     height = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_height),
-                    parentWidth = rectangleWidthPx,
+                    parentWidth = viewState.size.width,
                     parentHeight = measuredRectangle.height,
                 )
             }
@@ -133,37 +112,28 @@ class NavigationView @JvmOverloads constructor(
             )
         }
 
-        val measuredWidth = resolveSize(measuredRectangle.width, widthMeasureSpec)
-        val measuredHeight = resolveSize(measuredRectangle.height, heightMeasureSpec)
-
-        setMeasuredDimension(measuredWidth, measuredHeight)
+        resolveAndSetMeasuring(
+            measuredRectangle.width, widthMeasureSpec,
+            measuredRectangle.height, heightMeasureSpec
+        )
     }
 
-    override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
-        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
-        updateFocusState(gainFocus)
-    }
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        updateFocusState(isFocused)
-    }
-
-    /** Обновление состояния фокуса */
-    private fun updateFocusState(gainFocus: Boolean) {
-        updateState { oldState -> oldState.copy(isFocused = gainFocus) }
+    override fun updateFocusState(focused: Boolean) {
+        updateState { oldState -> oldState.copy(isFocused = focused) }
     }
 
     fun updateState(newState: (State) -> State) {
         state = newState.invoke(state)
 
-        rectangleDrawer.updateState { oldState ->
+        // Обновляем внутреннее состояние прямоугольника
+        backgroundCardDrawer.updateState { oldState ->
             oldState.copy(
                 isFocused = state.isFocused
             )
         }
 
-        titleSubtitleDrawer.updateState { oldState ->
+        // Обновляем внутреннее состояние заголовка и подзаголовка
+        textDrawer.updateState { oldState ->
             oldState.copy(
                 title = state.title,
                 subtitle = state.subtitle,
@@ -172,7 +142,8 @@ class NavigationView @JvmOverloads constructor(
             )
         }
 
-        arrowDrawer.updateState { oldState ->
+        // Обновляем внутреннее стрелки навигации
+        arrowImageDrawer.updateState { oldState ->
             oldState.copy(
                 focusedResourceId = internalState.focusedNavigationIconRes,
                 unfocusedResourceId = internalState.unfocusedNavigationIconRes,
@@ -187,12 +158,11 @@ class NavigationView @JvmOverloads constructor(
     data class State(
         val title: String = "",
         val subtitle: String = "",
-        val isFocused: Boolean = false
+        val isFocused: Boolean = false,
     )
 
     private data class InternalState(
-        val focusedNavigationIconRes: Int = 0,
-        val unfocusedNavigationIconRes: Int = 0,
+        val focusedNavigationIconRes: Int = R.drawable.img_right_arrow_focused,
+        val unfocusedNavigationIconRes: Int = R.drawable.img_right_arrow_unfocused,
     )
-
 }

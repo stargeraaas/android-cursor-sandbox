@@ -22,9 +22,9 @@ import kotlin.math.min
  * Поддерживает разные стили для состояний фокуса/без фокуса, многострочность и троеточие.
  */
 class TitleSubtitleDrawer(
-    private val context: Context,
-    private val targetView: View
-) : Drawer {
+    context: Context,
+    targetView: View,
+) : BaseDrawer<TitleSubtitleDrawer.State>(targetView) {
 
     private var titleLayout: StaticLayout? = null
     private var subtitleLayout: StaticLayout? = null
@@ -47,14 +47,18 @@ class TitleSubtitleDrawer(
             updateTitlePaint()
         }
 
+    /** Объект для хранения кистей текста. */
     private var paints = Paints()
 
+    /** Кисть для заголовка. */
     private val titlePaint: TextPaint
         get() = if (state.isFocused) paints.titleFocused else paints.titleUnfocused
 
+    /** Кисть для подзаголовка. */
     private val subtitlePaint: TextPaint
         get() = if (state.isFocused) paints.subtitleFocused else paints.subtitleUnfocused
 
+    /** TextView для применения стиля из ресурсов и маппинга его в TextPaint */
     private val styledTextView = TextView(context)
 
     init {
@@ -62,71 +66,45 @@ class TitleSubtitleDrawer(
     }
 
     /** Обновляет состояние в соответствии с новыми настройками. */
-    fun updateState(newState: (State) -> State) {
+    override fun updateState(newState: (State) -> State) {
         state = newState(state)
-
         updateTitlePaint()
-
-        targetView.apply {
-            invalidate()
-            requestLayout()
-        }
-    }
-
-    /** Обновляет стили текста в соответствии с новыми настройками. */
-    fun updateTextStyles(newTextStyles: (TextStyles) -> TextStyles) {
-        textStyles = newTextStyles(textStyles)
-
-        updateTitlePaint()
-
-        targetView.apply {
-            invalidate()
-            requestLayout()
-        }
+        redraw()
     }
 
     override fun draw(canvas: Canvas) {
-
-        var y = if (state.verticalAlignment == VerticalAlignment.CENTER) {
-            calculateVerticalOffset(state.parentHeight, getMeasuredHeightWithoutPaddings())
-        } else {
-            state.paddings.top.toFloat()
-        }
-
-        Log.w("getMeasuredHeightWithoutPaddings", "draw y= $y")
-
-
-        var x = if (state.horizontalAlignment == HorizontalAlignment.CENTER) {
-            0f
-        } else {
-            state.paddings.left.toFloat()
-        }
+        var y = getLeftY()
+        val x = getTopX()
 
         titleLayout?.let { layout ->
-            val layoutWidth = layout.width
-            val layoutHeight = layout.height
-
-            canvas.save()
-            canvas.translate(x, y)
-            layout.draw(canvas)
-            canvas.restore()
-
+            drawLayout(canvas, layout, x, y)
             y += layout.height
         }
 
-        if (titleLayout != null && subtitleLayout != null) {
-            y += state.spacing
-        }
-
         subtitleLayout?.let { layout ->
-            val layoutWidth = layout.width
-            val layoutHeight = layout.height
-
-            canvas.save()
-            canvas.translate(x, y)
-            layout.draw(canvas)
-            canvas.restore()
+            // Отступ между заголовком и подзаголовком
+            y += state.spacing
+            drawLayout(canvas, layout, x, y)
         }
+    }
+
+    private fun drawLayout(canvas: Canvas, layout: StaticLayout, x: Float, y: Float) {
+        canvas.save()
+        canvas.translate(x, y)
+        layout.draw(canvas)
+        canvas.restore()
+    }
+
+    private fun getLeftY() = if (state.verticalAlignment == VerticalAlignment.CENTER) {
+        calculateVerticalOffset(state.parentHeight, getMeasuredHeightWithoutPaddings())
+    } else {
+        state.paddings.top.toFloat()
+    }
+
+    private fun getTopX() = if (state.horizontalAlignment == HorizontalAlignment.CENTER) {
+        0f
+    } else {
+        state.paddings.left.toFloat()
     }
 
     private fun getMeasuredHeightWithoutPaddings(): Int {
@@ -134,7 +112,7 @@ class TitleSubtitleDrawer(
 
         height += titleLayout?.height ?: 0
         height += subtitleLayout?.height ?: 0
-        height +=  if (subtitleLayout?.height == 0) 0 else state.spacing
+        height += if (subtitleLayout?.height == 0) 0 else state.spacing
 
         return height.apply {
             Log.d("getMeasuredHeightWithoutPaddings", "height = $height")
@@ -145,7 +123,7 @@ class TitleSubtitleDrawer(
         return state.parentWidth.toFloat()
     }
 
-    override fun measure(desiredWidth: Int, heightMeasureSpec: Int): Drawer.MeasureResult {
+    override fun measure(desiredWidth: Int, desiredHeight: Int): Drawer.MeasuredResult {
         val measuredWidth = desiredWidth + state.paddings.horizontal()
 
         buildLayouts(measuredWidth)
@@ -157,7 +135,7 @@ class TitleSubtitleDrawer(
 
         val desiredHeight = titleHeight + spacing + subtitleHeight + state.paddings.vertical()
 
-        return Drawer.MeasureResult(measuredWidth, desiredHeight)
+        return Drawer.MeasuredResult(measuredWidth, desiredHeight)
     }
 
     /**
@@ -174,6 +152,7 @@ class TitleSubtitleDrawer(
                     state.paddings.left.toFloat()
                 }
             }
+
             HorizontalAlignment.CENTER -> {
                 if (state.parentWidth > 0) {
                     // Центрируем относительно родительского контейнера
@@ -183,6 +162,7 @@ class TitleSubtitleDrawer(
                     state.paddings.left + (availableWidth - contentWidth) / 2
                 }
             }
+
             HorizontalAlignment.RIGHT -> {
                 if (state.parentWidth > 0) {
                     // Позиционируем по правому краю родительского контейнера
@@ -210,6 +190,7 @@ class TitleSubtitleDrawer(
                     state.paddings.top.toFloat()
                 }
             }
+
             VerticalAlignment.CENTER -> {
                 if (state.parentHeight > 0) {
                     // Центрируем относительно родительского контейнера
@@ -219,6 +200,7 @@ class TitleSubtitleDrawer(
                     state.paddings.top + (availableHeight - contentHeight) / 2
                 }
             }
+
             VerticalAlignment.BOTTOM -> {
                 if (state.parentHeight > 0) {
                     // Позиционируем по нижнему краю родительского контейнера
@@ -245,14 +227,13 @@ class TitleSubtitleDrawer(
             subtitleLayout =
                 makeLayout(state.subtitle, subtitlePaint, state.maxSubtitleLines, contentWidth)
         }
-
     }
 
     private fun makeLayout(
         text: CharSequence?,
         paint: TextPaint,
         maxLines: Int,
-        width: Int
+        width: Int,
     ): StaticLayout? {
         val src = text ?: return null
         return StaticLayout.Builder.obtain(src, 0, src.length, paint, width)
@@ -372,7 +353,7 @@ class TitleSubtitleDrawer(
         text: String,
         paint: TextPaint,
         width: Float,
-        maxLines: Int
+        maxLines: Int,
     ): Float {
         val words = text.split(" ")
         var currentLine = ""
@@ -402,7 +383,6 @@ class TitleSubtitleDrawer(
         val actualLines = min(lineCount, maxLines)
         return actualLines * paint.fontSpacing
     }
-
 
     /** Обновляет кисть для заголовка в соответствии с текущим стилем и состоянием фокуса. */
     private fun updateTitlePaint() {
@@ -441,10 +421,13 @@ class TitleSubtitleDrawer(
     private fun calculateVerticalOffset(parentHeight: Int, viewHeight: Int): Float {
         return when (state.verticalAlignment) {
             VerticalAlignment.TOP -> 0f
-            VerticalAlignment.CENTER -> (parentHeight/2 - viewHeight/2).toFloat()
+            VerticalAlignment.CENTER -> (parentHeight / 2 - viewHeight / 2).toFloat()
             VerticalAlignment.BOTTOM -> parentHeight.toFloat()
         }.apply {
-            Log.i("getMeasuredHeightWithoutPaddings", "verticalOffset = $this parentHeight = $parentHeight viewHeight = $viewHeight")
+            Log.i(
+                "getMeasuredHeightWithoutPaddings",
+                "verticalOffset = $this parentHeight = $parentHeight viewHeight = $viewHeight"
+            )
         }
     }
 
@@ -475,7 +458,7 @@ class TitleSubtitleDrawer(
         val parentHeight: Int = 0,
         val paddings: Paddings = Paddings(0, 0, 0, 0),
         val verticalAlignment: VerticalAlignment = VerticalAlignment.TOP,
-        val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.LEFT
+        val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.LEFT,
     ) {
 
         fun hasTitle() = title.isNotEmpty()
@@ -492,12 +475,11 @@ class TitleSubtitleDrawer(
         val titleFocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG),
         val titleUnfocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG),
         val subtitleFocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG),
-        val subtitleUnfocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+        val subtitleUnfocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG),
     )
 
     data class TextStyles(
         val titleStyle: TextStyle,
-        val subtitleStyle: TextStyle
+        val subtitleStyle: TextStyle,
     )
-
 }

@@ -16,6 +16,8 @@
     <dimen name="pc_title_subtitle_spacing">2dp</dimen>
     <dimen name="pc_vertical_padding">16dp</dimen>
     <dimen name="pc_horizontal_padding">16dp</dimen>
+
+    <dimen name="pc_toggle_title_padding_right">76dp</dimen>
     <!-- per-side defaults -->
 
     <dimen name="pc_padding_top">8dp</dimen>
@@ -23,9 +25,17 @@
     <dimen name="pc_padding_start">8dp</dimen>
     <dimen name="pc_padding_end">8dp</dimen>
 
-    <dimen name="pc_toggle_width">44dp</dimen>
-    <dimen name="pc_toggle_height">28dp</dimen>
+    <dimen name="pc_toggle_width">51dp</dimen>
+    <dimen name="pc_toggle_height">42dp</dimen>
 
     <dimen name="pc_navigation_icon_width">12dp</dimen>
     <dimen name="pc_navigation_icon_height">20dp</dimen>
+
+    <dimen name="pc_navigation_width">392dp</dimen>
+    <dimen name="pc_navigation_height">78dp</dimen>
+
+    <dimen name="pc_toggle_view_width">392dp</dimen>
+    <dimen name="pc_toggle_view_height">0dp</dimen>
+
+    <dimen name="pc_toggle_title_width">300dp</dimen>
 </resources>

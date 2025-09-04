@@ -9,18 +9,18 @@ import android.graphics.Paint
 import android.util.Log
 import android.view.View
 import androidx.annotation.ColorInt
-import dev.stargeras.sandbox.drawers.Drawer
 import dev.stargeras.sandbox.R
-import dev.stargeras.sandbox.drawers.Drawer.MeasureResult
+import dev.stargeras.sandbox.drawers.Drawer.MeasuredResult
+import dev.stargeras.sandbox.drawers.RectangleDrawer.State
 
 /**
  * Класс для отрисовки прямоугольника с настраиваемыми параметрами и анимацией.
  * Инкапсулирует логику рисования прямоугольника с поддержкой масштабирования, скругления углов и анимации фокуса.
  */
 class RectangleDrawer(
-    private val context: Context,
-    private val targetView: View
-) : Drawer {
+    context: Context,
+    targetView: View,
+) : BaseDrawer<State>(targetView) {
 
     var state: State = State(
         desiredWidth = 0,
@@ -36,8 +36,6 @@ class RectangleDrawer(
     )
         private set
 
-    private var coordinates: RectangleCoordinates = RectangleCoordinates(0, 0, 0, 0)
-
     /** Длительность анимации (мс). */
     var animationDurationMs: Long =
         context.resources.getInteger(R.integer.pc_animation_duration_ms).toLong()
@@ -49,39 +47,31 @@ class RectangleDrawer(
 
     private var scaleAnimator: ValueAnimator? = null
 
-    fun updateState(newState: (State) -> State) {
+    override fun updateState(newState: (State) -> State) {
         val oldState = state
         val newState = newState.invoke(oldState)
 
+        if (newState == oldState) {
+            return
+        }
+
         state = newState
 
-        paint.color = getPaintColor()
-
         if (oldState.isFocused == newState.isFocused) {
-            // Если состояние фокуса не изменилось, просто пересчитываем координаты
-            targetView.apply {
-                invalidate()
-                requestLayout()
-            }
+            // Если состояние фокуса не изменилось просто перерисовываем
+            // это происходит когда у нас идет анимация
+            redraw()
         } else {
             // Если состояние фокуса изменилось, запускаем анимацию
             startFocusAnimation(newState.isFocused)
         }
     }
 
-    private fun updateCoordinates(newState: (RectangleCoordinates) -> RectangleCoordinates) {
-        coordinates = newState.invoke(coordinates)
-    }
-
-    /**
-     * Вычисляет и сохраняет координаты прямоугольника.
-     */
+    /** Вычисляет и сохраняет координаты карточки прямоугольника */
     private fun calculateCoordinates() {
         // Вычисляем координаты для центрирования
         val viewWidth = state.width
         val viewHeight = state.height
-
-        Log.v("TitleSubtitleDrawer", "RECTANGLE: calculateCoordinates: width= ${targetView.width}, height= ${targetView.height}")
 
         val leftX = -state.scaledWidthPaddingValue()
         val topY = -state.scaledHeightPaddingValue()
@@ -102,12 +92,7 @@ class RectangleDrawer(
                 bottom = bottomY
             )
         }
-
-
-        Log.v("getMeasuredHeightWithoutPaddings", "coordinates: $coordinates")
-
     }
-
 
     private fun getPaintColor() =
         if (state.isFocused) state.colors.colorFocused else state.colors.colorUnfocused
@@ -159,7 +144,7 @@ class RectangleDrawer(
         // Обновляем цвет в зависимости от состояния фокуса
         paint.color = getPaintColor()
 
-        Log.e("TitleSubtitleDrawer", "RECTANGLE: draw: coordinates= $coordinates")
+        Log.v("ImageDrawer", "RECTANGLE: draw: coordinates= $coordinates")
 
         coordinates.apply {
             // Рисуем прямоугольник используя кэшированные координаты
@@ -175,7 +160,7 @@ class RectangleDrawer(
         }
     }
 
-    override fun measure(desiredWidth: Int, desiredHeight: Int): MeasureResult {
+    override fun measure(desiredWidth: Int, desiredHeight: Int): MeasuredResult {
         // Вычисляем размеры с учетом масштаба
         val scaledValueWidth = state.scaledWidthPaddingValue()
         val scaledValueHeight = state.scaledHeightPaddingValue()
@@ -192,9 +177,8 @@ class RectangleDrawer(
 
         // Вычисляем координаты для центрирования
         calculateCoordinates()
-        Log.e("TitleSubtitleDrawer", "RECTANGLE: measure: $totalWidth x $totalHeight")
 
-        return MeasureResult(totalWidth, totalHeight)
+        return MeasuredResult(totalWidth, totalHeight)
     }
 
     /**
@@ -233,19 +217,8 @@ class RectangleDrawer(
             ((desiredHeight - desiredHeight / currentScale).toInt()) / 2
     }
 
-    /** Класс для хранения координат прямоугольника. */
-    private data class RectangleCoordinates(
-        val left: Int,
-        val top: Int,
-        val right: Int,
-        val bottom: Int
-    )
-
     data class RectangleColors(
         @ColorInt val colorFocused: Int,
         @ColorInt val colorUnfocused: Int,
     )
-
-    private fun State.getPaintColor() =
-        if (isFocused) colors.colorFocused else colors.colorUnfocused
 }
