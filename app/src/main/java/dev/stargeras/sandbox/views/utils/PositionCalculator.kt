@@ -1,7 +1,7 @@
 package dev.stargeras.sandbox.views.utils
 
 import android.util.Log
-import dev.stargeras.sandbox.drawers.Paddings
+import dev.stargeras.sandbox.views.utils.Paddings
 
 object PositionCalculator {
     /**
@@ -17,13 +17,7 @@ object PositionCalculator {
 
         return when (alignment) {
             HorizontalAlignment.LEFT -> {
-                if (parentWidth > 0) {
-                    // Если указан размер родителя, позиционируем относительно него
-                    paddings.left
-                } else {
-                    // Иначе используем доступную ширину View
-                    paddings.left
-                }
+               paddings.left
             }
 
             HorizontalAlignment.CENTER -> {
@@ -61,13 +55,7 @@ object PositionCalculator {
 
         return when (alignment) {
             VerticalAlignment.TOP -> {
-                if (parentHeight > 0) {
-                    // Если указан размер родителя, позиционируем относительно него
-                    paddings.top
-                } else {
-                    // Иначе используем доступную высоту View
-                    paddings.top
-                }
+                paddings.top
             }
 
             VerticalAlignment.CENTER -> {

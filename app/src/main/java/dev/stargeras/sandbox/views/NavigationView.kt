@@ -4,10 +4,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import dev.stargeras.sandbox.R
-import dev.stargeras.sandbox.drawers.ImageDrawer
-import dev.stargeras.sandbox.drawers.Paddings
-import dev.stargeras.sandbox.drawers.RectangleDrawer
-import dev.stargeras.sandbox.drawers.TitleSubtitleDrawer
+import dev.stargeras.sandbox.drawers.ImageLayoutRender
+import dev.stargeras.sandbox.views.utils.Paddings
+import dev.stargeras.sandbox.drawers.RectangleLayoutRender
+import dev.stargeras.sandbox.drawers.TitleSubtitleLayoutRender
 import dev.stargeras.sandbox.views.utils.HorizontalAlignment
 import dev.stargeras.sandbox.views.utils.VerticalAlignment
 
@@ -17,11 +17,11 @@ class NavigationView @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : BaseCanvasView(context, attrs, defStyleAttr) {
 
-    private val backgroundCardDrawer by lazy { RectangleDrawer(context, this) }
+    private val backgroundCardDrawer by lazy { RectangleLayoutRender(context, this) }
 
-    private val textDrawer by lazy { TitleSubtitleDrawer(context, this) }
+    private val textDrawer by lazy { TitleSubtitleLayoutRender(context, this) }
 
-    private val arrowImageDrawer by lazy { ImageDrawer(context, this) }
+    private val arrowImageDrawer by lazy { ImageLayoutRender(context, this) }
 
     var state: State = State()
         private set
@@ -54,7 +54,6 @@ class NavigationView @JvmOverloads constructor(
 
         textDrawer.updateState { oldState ->
             oldState.copy(
-                maxWidth = context.resources.getDimensionPixelSize(R.dimen.pc_max_content_width),
                 paddings = Paddings(
                     top = context.resources.getDimensionPixelSize(R.dimen.pc_vertical_padding),
                     right = context.resources.getDimensionPixelSize(R.dimen.pc_horizontal_padding),
@@ -79,36 +78,26 @@ class NavigationView @JvmOverloads constructor(
         // Вычисляем ширину и высоту для заголовка и подзаголовка
         val measuredTitle = textDrawer.measure(
             desiredWidth = viewState.size.width,
-            desiredHeight = textDrawer.getContentHeight()
+            desiredHeight = textDrawer.getContentHeight(),
+            parentWidth = viewState.size.width,
+            parentHeight = viewState.size.height
         )
 
         // Вычисляем ширину и высоту для прямоугольника по ширине и высоте заголовка и подзаголовка
         val measuredRectangle = backgroundCardDrawer.measure(
             desiredWidth = viewState.size.width,
-            desiredHeight = measuredTitle.height
+            desiredHeight = measuredTitle.height,
+            parentWidth = viewState.size.width,
+            parentHeight = viewState.size.height
         )
-
-        textDrawer.updateState { oldState ->
-            oldState.copy(
-                parentWidth = measuredRectangle.width,
-                parentHeight = measuredRectangle.height
-            )
-        }
 
         // Отрисовка переключателя
         arrowImageDrawer.apply {
-            updateState { oldState ->
-                oldState.copy(
-                    width = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_width),
-                    height = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_height),
-                    parentWidth = viewState.size.width,
-                    parentHeight = measuredRectangle.height,
-                )
-            }
-
             measure(
-                context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_width),
-                context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_height)
+                desiredWidth = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_width),
+                desiredHeight = context.resources.getDimensionPixelSize(R.dimen.pc_navigation_icon_height),
+                parentWidth = viewState.size.width,
+                parentHeight = measuredRectangle.height,
             )
         }
 

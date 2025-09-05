@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        findViewById<View>(R.id.titleSubtitleCard).requestFocus()
+        // findViewById<View>(R.id.titleSubtitleCard).requestFocus()
 
         // Демонстрация работы ToggleView
         setupToggleViews()

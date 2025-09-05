@@ -10,29 +10,28 @@ import android.util.Log
 import android.view.View
 import androidx.annotation.ColorInt
 import dev.stargeras.sandbox.R
-import dev.stargeras.sandbox.drawers.Drawer.MeasuredResult
-import dev.stargeras.sandbox.drawers.RectangleDrawer.State
+import dev.stargeras.sandbox.drawers.LayoutRender.MeasuredResult
+import dev.stargeras.sandbox.drawers.RectangleLayoutRender.State
 
 /**
  * Класс для отрисовки прямоугольника с настраиваемыми параметрами и анимацией.
  * Инкапсулирует логику рисования прямоугольника с поддержкой масштабирования, скругления углов и анимации фокуса.
+ *
+ * @see BaseLayoutRender
  */
-class RectangleDrawer(
+class RectangleLayoutRender(
     context: Context,
     targetView: View,
-) : BaseDrawer<State>(targetView) {
+) : BaseLayoutRender<State>(targetView) {
 
     var state: State = State(
-        desiredWidth = 0,
-        desiredHeight = 0,
         cornerRadiusPx = context.resources.getDimension(R.dimen.pc_corner_radius),
         focusScalePercent = 0.03f,
         colors = RectangleColors(
             colorFocused = context.resources.getColor(R.color.pc_color_focused, context.theme),
             colorUnfocused = context.resources.getColor(R.color.pc_color_unfocused, context.theme)
         ),
-        isFocused = false,
-        currentScale = 1f
+        isFocused = false
     )
         private set
 
@@ -70,18 +69,18 @@ class RectangleDrawer(
     /** Вычисляет и сохраняет координаты карточки прямоугольника */
     private fun calculateCoordinates() {
         // Вычисляем координаты для центрирования
-        val viewWidth = state.width
-        val viewHeight = state.height
+        val viewWidth = internalState.desiredWidth
+        val viewHeight = internalState.desiredHeight
 
-        val leftX = -state.scaledWidthPaddingValue()
-        val topY = -state.scaledHeightPaddingValue()
+        val leftX = -internalState.scaledWidthPaddingValue()
+        val topY = -internalState.scaledHeightPaddingValue()
 
         var rightX = leftX + viewWidth
         var bottomY = topY + viewHeight
 
         if (state.isFocused) {
-            rightX = leftX + state.width + state.scaledWidthPaddingValue()
-            bottomY = topY + state.height + state.scaledHeightPaddingValue()
+            rightX = leftX + internalState.desiredWidth + internalState.scaledWidthPaddingValue()
+            bottomY = topY + internalState.desiredWidth + internalState.scaledHeightPaddingValue()
         }
 
         updateCoordinates { oldState ->
@@ -114,7 +113,7 @@ class RectangleDrawer(
     private fun startFocusAnimation(gainFocus: Boolean) {
         scaleAnimator?.cancel()
 
-        val start = state.currentScale
+        val start = currentScale
 
         val end = if (gainFocus) {
             1f + state.focusScalePercent.coerceIn(0f, 1f)
@@ -125,9 +124,8 @@ class RectangleDrawer(
         scaleAnimator = ValueAnimator.ofFloat(start, end).apply {
             duration = animationDurationMs
             addUpdateListener { animator ->
-                val value = animator.animatedValue as Float
                 // Обновляем текущий масштаб увеличения для вычисления новых координат
-                updateState { oldState -> oldState.copy(currentScale = value) }
+                currentScale = animator.animatedValue as Float
             }
 
             addListener(object : AnimatorListenerAdapter() {
@@ -160,25 +158,29 @@ class RectangleDrawer(
         }
     }
 
-    override fun measure(desiredWidth: Int, desiredHeight: Int): MeasuredResult {
+    private var currentScale = 1f
+
+    private fun InternalState.scaledWidthPaddingValue() = (desiredWidth * currentScale).toInt()
+    private fun InternalState.scaledHeightPaddingValue() = (desiredWidth * currentScale).toInt()
+
+    override fun measure(desiredWidth: Int, desiredHeight: Int, parentWidth: Int, parentHeight: Int): MeasuredResult {
         // Вычисляем размеры с учетом масштаба
-        val scaledValueWidth = state.scaledWidthPaddingValue()
-        val scaledValueHeight = state.scaledHeightPaddingValue()
+        val totalWidth = desiredWidth + internalState.scaledWidthPaddingValue()
+        val totalHeight = desiredHeight + internalState.scaledHeightPaddingValue()
 
-        val totalWidth = desiredWidth + scaledValueWidth
-        val totalHeight = desiredHeight + scaledValueHeight
-
-        updateState { oldState ->
+        updateInternalState { oldState ->
             oldState.copy(
                 desiredWidth = totalWidth,
-                desiredHeight = totalHeight
+                desiredHeight = totalHeight,
+                parentWidth = parentWidth,
+                parentHeight = parentHeight
             )
         }
 
         // Вычисляем координаты для центрирования
         calculateCoordinates()
 
-        return MeasuredResult(totalWidth, totalHeight)
+        return MeasuredResult(internalState.desiredWidth, internalState.desiredHeight)
     }
 
     /**
@@ -186,36 +188,17 @@ class RectangleDrawer(
      *
      * Хранит параметры, влияющие на размеры, масштабирование и фокус элемента.
      *
-     * @property desiredWidth желаемая ширина содержимого (без учета масштабирования).
-     * @property desiredHeight желаемая высота содержимого (без учета масштабирования).
      * @property cornerRadiusPx радиус скругления углов (px).
      * @property isFocused флаг фокуса элемента.
      * @property currentScale текущий масштаб увеличения.
      * @property focusScalePercent процент увеличения размеров при получении фокуса.
      */
     data class State(
-        val desiredWidth: Int,
-        val desiredHeight: Int,
         val cornerRadiusPx: Float,
         val focusScalePercent: Float,
         val colors: RectangleColors,
         val isFocused: Boolean = false,
-        val currentScale: Float = 1f,
-    ) {
-
-        /** Общая ширина с учетом масштабирования */
-        val width: Int = desiredWidth + scaledWidthPaddingValue()
-
-        /** Общая высота с учетом масштабирования */
-        val height: Int = desiredHeight + scaledHeightPaddingValue()
-
-        /** Отступ по ширине после масштабирования */
-        fun scaledWidthPaddingValue() = ((desiredWidth - desiredWidth / currentScale).toInt()) / 2
-
-        /** Отступ по высоте после масштабирования */
-        fun scaledHeightPaddingValue() =
-            ((desiredHeight - desiredHeight / currentScale).toInt()) / 2
-    }
+    )
 
     data class RectangleColors(
         @ColorInt val colorFocused: Int,

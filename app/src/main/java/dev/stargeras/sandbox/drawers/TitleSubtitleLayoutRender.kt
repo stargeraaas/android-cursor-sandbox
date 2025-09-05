@@ -13,6 +13,7 @@ import android.widget.TextView
 import dev.stargeras.sandbox.R
 import dev.stargeras.sandbox.TextStyle
 import dev.stargeras.sandbox.views.utils.HorizontalAlignment
+import dev.stargeras.sandbox.views.utils.Paddings
 import dev.stargeras.sandbox.views.utils.VerticalAlignment
 import kotlin.math.max
 import kotlin.math.min
@@ -20,11 +21,13 @@ import kotlin.math.min
 /**
  * Класс для отрисовки заголовка и подзаголовка с настраиваемыми стилями.
  * Поддерживает разные стили для состояний фокуса/без фокуса, многострочность и троеточие.
+ *
+ * @see BaseLayoutRender
  */
-class TitleSubtitleDrawer(
+class TitleSubtitleLayoutRender(
     context: Context,
     targetView: View,
-) : BaseDrawer<TitleSubtitleDrawer.State>(targetView) {
+) : BaseLayoutRender<TitleSubtitleLayoutRender.State>(targetView) {
 
     private var titleLayout: StaticLayout? = null
     private var subtitleLayout: StaticLayout? = null
@@ -58,12 +61,8 @@ class TitleSubtitleDrawer(
     private val subtitlePaint: TextPaint
         get() = if (state.isFocused) paints.subtitleFocused else paints.subtitleUnfocused
 
-    /** TextView для применения стиля из ресурсов и маппинга его в TextPaint */
+    /** TextView для применения стиля из ресурсов и маппинга его в TextPaint. */
     private val styledTextView = TextView(context)
-
-    init {
-        updateTitlePaint()
-    }
 
     /** Обновляет состояние в соответствии с новыми настройками. */
     override fun updateState(newState: (State) -> State) {
@@ -96,7 +95,7 @@ class TitleSubtitleDrawer(
     }
 
     private fun getLeftY() = if (state.verticalAlignment == VerticalAlignment.CENTER) {
-        calculateVerticalOffset(state.parentHeight, getMeasuredHeightWithoutPaddings())
+        calculateVerticalOffset(internalState.parentHeight, getMeasuredHeightWithoutPaddings())
     } else {
         state.paddings.top.toFloat()
     }
@@ -114,16 +113,15 @@ class TitleSubtitleDrawer(
         height += subtitleLayout?.height ?: 0
         height += if (subtitleLayout?.height == 0) 0 else state.spacing
 
-        return height.apply {
-            Log.d("getMeasuredHeightWithoutPaddings", "height = $height")
-        }
+        return height
     }
 
-    private fun getMeasuredWidthWithoutPaddings(): Float {
-        return state.parentWidth.toFloat()
-    }
-
-    override fun measure(desiredWidth: Int, desiredHeight: Int): Drawer.MeasuredResult {
+    override fun measure(
+        desiredWidth: Int,
+        desiredHeight: Int,
+        parentWidth: Int,
+        parentHeight: Int,
+    ): LayoutRender.MeasuredResult {
         val measuredWidth = desiredWidth + state.paddings.horizontal()
 
         buildLayouts(measuredWidth)
@@ -133,9 +131,18 @@ class TitleSubtitleDrawer(
 
         val spacing = if (titleHeight > 0 && subtitleHeight > 0) state.spacing else 0
 
-        val desiredHeight = titleHeight + spacing + subtitleHeight + state.paddings.vertical()
+        val measuredHeight = titleHeight + spacing + subtitleHeight + state.paddings.vertical()
 
-        return Drawer.MeasuredResult(measuredWidth, desiredHeight)
+        updateInternalState { oldState ->
+            oldState.copy(
+                desiredWidth = measuredWidth,
+                desiredHeight = measuredHeight,
+                parentWidth = parentWidth,
+                parentHeight = parentHeight
+            )
+        }
+
+        return LayoutRender.MeasuredResult(internalState.desiredWidth, internalState.desiredHeight)
     }
 
     /**
@@ -144,7 +151,7 @@ class TitleSubtitleDrawer(
     private fun calculateHorizontalPosition(availableWidth: Int, contentWidth: Float): Float {
         return when (state.horizontalAlignment) {
             HorizontalAlignment.LEFT -> {
-                if (state.parentWidth > 0) {
+                if (internalState.parentWidth > 0) {
                     // Если указан размер родителя, позиционируем относительно него
                     state.paddings.left.toFloat()
                 } else {
@@ -154,9 +161,9 @@ class TitleSubtitleDrawer(
             }
 
             HorizontalAlignment.CENTER -> {
-                if (state.parentWidth > 0) {
+                if (internalState.parentWidth > 0) {
                     // Центрируем относительно родительского контейнера
-                    (state.parentWidth - contentWidth) / 2
+                    (internalState.parentWidth - contentWidth) / 2
                 } else {
                     // Центрируем относительно доступной области View
                     state.paddings.left + (availableWidth - contentWidth) / 2
@@ -164,9 +171,9 @@ class TitleSubtitleDrawer(
             }
 
             HorizontalAlignment.RIGHT -> {
-                if (state.parentWidth > 0) {
+                if (internalState.parentWidth > 0) {
                     // Позиционируем по правому краю родительского контейнера
-                    state.parentWidth - contentWidth - state.paddings.right
+                    internalState.parentWidth - contentWidth - state.paddings.right
                 } else {
                     // Позиционируем по правому краю доступной области View
                     state.paddings.left + (availableWidth - contentWidth)
@@ -179,10 +186,9 @@ class TitleSubtitleDrawer(
      * Вычисляет вертикальную позицию в зависимости от выравнивания и размера родителя
      */
     private fun calculateVerticalPosition(availableHeight: Int, contentHeight: Float): Float {
-
         return when (state.verticalAlignment) {
             VerticalAlignment.TOP -> {
-                if (state.parentHeight > 0) {
+                if (internalState.parentHeight > 0) {
                     // Если указан размер родителя, позиционируем относительно него
                     state.paddings.top.toFloat()
                 } else {
@@ -192,9 +198,9 @@ class TitleSubtitleDrawer(
             }
 
             VerticalAlignment.CENTER -> {
-                if (state.parentHeight > 0) {
+                if (internalState.parentHeight > 0) {
                     // Центрируем относительно родительского контейнера
-                    (state.parentHeight - contentHeight) / 2
+                    (internalState.parentHeight - contentHeight) / 2
                 } else {
                     // Центрируем относительно доступной области View
                     state.paddings.top + (availableHeight - contentHeight) / 2
@@ -202,9 +208,9 @@ class TitleSubtitleDrawer(
             }
 
             VerticalAlignment.BOTTOM -> {
-                if (state.parentHeight > 0) {
+                if (internalState.parentHeight > 0) {
                     // Позиционируем по нижнему краю родительского контейнера
-                    state.parentHeight - contentHeight - state.paddings.bottom
+                    internalState.parentHeight - contentHeight - state.paddings.bottom
                 } else {
                     // Позиционируем по нижнему краю доступной области View
                     state.paddings.top + (availableHeight - contentHeight)
@@ -268,7 +274,7 @@ class TitleSubtitleDrawer(
         }
 
         // Вычисляем ширину контента между заголовком, подзаголовком и максимальной шириной
-        return max(maxWidth.toInt(), state.maxWidth)
+        return max(maxWidth.toInt(), internalState.desiredWidth)
     }
 
     /**
@@ -291,10 +297,10 @@ class TitleSubtitleDrawer(
 
     /** Вычисляет ширину контента по содержимому. */
     fun getContentWidth(): Int {
-        return if (state.maxWidth <= 0) {
+        return if (internalState.desiredWidth <= 0) {
             calculateOptimalWidth()
         } else {
-            min(state.maxWidth, calculateOptimalWidth())
+            min(internalState.desiredWidth, calculateOptimalWidth())
         }
     }
 
@@ -446,16 +452,20 @@ class TitleSubtitleDrawer(
         paints = newState.invoke(paints)
     }
 
+    /**
+     * Состояние, описывающее данные и параметры макета с заголовком и подзаголовком.
+     *
+     * Используется для вычисления размеров и отрисовки элемента, содержащего текстовые компоненты:
+     * заголовок (title) и подзаголовок (subtitle), с настройками позиционирования и внешнего вида.
+     */
     data class State(
         val title: String = "",
         val subtitle: String = "",
+        /** Расстояние между заголовком и подзаголовком. */
         val spacing: Int = 0,
-        val maxWidth: Int = 0,
         val maxTitleLines: Int = 1,
         val maxSubtitleLines: Int = 1,
         val isFocused: Boolean = false,
-        val parentWidth: Int = 0,
-        val parentHeight: Int = 0,
         val paddings: Paddings = Paddings(0, 0, 0, 0),
         val verticalAlignment: VerticalAlignment = VerticalAlignment.TOP,
         val horizontalAlignment: HorizontalAlignment = HorizontalAlignment.LEFT,
@@ -465,11 +475,6 @@ class TitleSubtitleDrawer(
 
         fun hasSubtitle() = subtitle.isNotEmpty()
     }
-
-    private data class InternalState(
-        val parentWidth: Int = 0,
-        val parentHeight: Int = 0,
-    )
 
     private data class Paints(
         val titleFocused: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG),

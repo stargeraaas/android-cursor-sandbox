@@ -4,10 +4,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import dev.stargeras.sandbox.R
-import dev.stargeras.sandbox.drawers.ImageDrawer
-import dev.stargeras.sandbox.drawers.Paddings
-import dev.stargeras.sandbox.drawers.RectangleDrawer
-import dev.stargeras.sandbox.drawers.TitleSubtitleDrawer
+import dev.stargeras.sandbox.drawers.ImageLayoutRender
+import dev.stargeras.sandbox.views.utils.Paddings
+import dev.stargeras.sandbox.drawers.RectangleLayoutRender
+import dev.stargeras.sandbox.drawers.TitleSubtitleLayoutRender
 import dev.stargeras.sandbox.views.utils.HorizontalAlignment
 import dev.stargeras.sandbox.views.utils.VerticalAlignment
 
@@ -20,11 +20,11 @@ class ToggleView @JvmOverloads constructor(
     // Слушатель состояния переключателя
     var toggleStateListener: ToggleStateListener? = null
 
-    private val cardDrawer by lazy { RectangleDrawer(context, this) }
+    private val cardDrawer by lazy { RectangleLayoutRender(context, this) }
 
-    private val textDrawer by lazy { TitleSubtitleDrawer(context, this) }
+    private val textDrawer by lazy { TitleSubtitleLayoutRender(context, this) }
 
-    private val toggleImageDrawer by lazy { ImageDrawer(context, this) }
+    private val toggleImageDrawer by lazy { ImageLayoutRender(context, this) }
 
     var state: State = State()
         private set
@@ -53,7 +53,6 @@ class ToggleView @JvmOverloads constructor(
         // Инициализация состояния заголовка и подзаголовка
         textDrawer.updateState { oldState ->
             oldState.copy(
-                maxWidth = titleViewWidth,
                 paddings = Paddings(
                     top = context.resources.getDimensionPixelSize(R.dimen.pc_vertical_padding),
                     right = context.resources.getDimensionPixelSize(R.dimen.pc_toggle_title_padding_right),
@@ -93,30 +92,27 @@ class ToggleView @JvmOverloads constructor(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // Вычисляем ширину и высоту для заголовка и подзаголовка
         val measuredTitle = textDrawer.measure(
-            titleViewWidth,
-            textDrawer.getContentHeight()
+            desiredWidth = titleViewWidth,
+            desiredHeight = textDrawer.getContentHeight(),
+            parentWidth = viewState.size.width,
+            parentHeight = viewState.size.height
         )
 
         // Вычисляем ширину и высоту для прямоугольника по ширине и высоте заголовка и подзаголовка
         val measuredRectangle = cardDrawer.measure(
-            viewState.size.width,
-            measuredTitle.height
+            desiredWidth = viewState.size.width,
+            desiredHeight = measuredTitle.height,
+            parentWidth = viewState.size.width,
+            parentHeight = viewState.size.height
         )
 
         // Отрисовка переключателя
         toggleImageDrawer.apply {
-            updateState { oldState ->
-                oldState.copy(
-                    width = context.resources.getDimensionPixelSize(R.dimen.pc_toggle_width),
-                    height = context.resources.getDimensionPixelSize(R.dimen.pc_toggle_height),
-                    parentWidth = measuredRectangle.width,
-                    parentHeight = measuredRectangle.height,
-                )
-            }
-
             measure(
-                desiredWidth = toggleImageDrawer.state.width,
-                desiredHeight = toggleImageDrawer.state.height
+                desiredWidth = context.resources.getDimensionPixelSize(R.dimen.pc_toggle_view_width),
+                desiredHeight = context.resources.getDimensionPixelSize(R.dimen.pc_toggle_view_height),
+                parentWidth = measuredRectangle.width,
+                parentHeight = measuredRectangle.height
             )
         }
 

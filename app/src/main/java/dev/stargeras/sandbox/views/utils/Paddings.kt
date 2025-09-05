@@ -1,4 +1,4 @@
-package dev.stargeras.sandbox.drawers
+package dev.stargeras.sandbox.views.utils
 
 /**  Класс, представляющий отступы (поля) вокруг элемента */
 data class Paddings(

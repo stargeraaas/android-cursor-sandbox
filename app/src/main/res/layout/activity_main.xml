@@ -21,18 +21,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <dev.stargeras.sandbox.TitleSubtitleCard
-            android:id="@+id/titleSubtitleCard"
-            android:paddingStart="20dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"/>
-
-        <dev.stargeras.sandbox.TitleSubtitleCard
-            android:id="@+id/titleSubtitleCard2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp" />
 
         <!-- ToggleView с FIT_CENTER -->
         <dev.stargeras.sandbox.views.ToggleView

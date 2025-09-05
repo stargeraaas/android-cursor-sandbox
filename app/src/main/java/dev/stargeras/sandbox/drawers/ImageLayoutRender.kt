@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.view.View
 import androidx.core.content.ContextCompat
 import dev.stargeras.sandbox.views.utils.HorizontalAlignment
+import dev.stargeras.sandbox.views.utils.Paddings
 import dev.stargeras.sandbox.views.utils.PositionCalculator
 import dev.stargeras.sandbox.views.utils.VerticalAlignment
 
@@ -13,10 +14,10 @@ import dev.stargeras.sandbox.views.utils.VerticalAlignment
  * Drawer для отрисовки ресурсов (drawable) на canvas с поддержкой ScaleType, размеров и отступов.
  * Аналогичен ImageView по функциональности масштабирования.
  */
-class ImageDrawer(
+class ImageLayoutRender(
     private val context: Context,
     targetView: View,
-) : BaseDrawer<ImageDrawer.State>(targetView) {
+) : BaseLayoutRender<ImageLayoutRender.State>(targetView) {
 
     /**
      * Состояние ImageDrawer
@@ -24,10 +25,6 @@ class ImageDrawer(
     data class State(
         val focusedResourceId: Int? = null,
         val unfocusedResourceId: Int? = null,
-        val width: Int = 0,
-        val height: Int = 0,
-        val parentWidth: Int = 0,
-        val parentHeight: Int = 0,
         val paddings: Paddings = Paddings(0, 0, 0, 0),
         val isFocused: Boolean = false,
         val verticalAlignment: VerticalAlignment = VerticalAlignment.TOP,
@@ -88,26 +85,26 @@ class ImageDrawer(
 
     private fun calculateHorizontalPosition(): Int {
         return PositionCalculator.calculateHorizontalPosition(
-            parentWidth = state.parentWidth,
-            viewWidth = state.width,
+            parentWidth = internalState.parentWidth,
+            viewWidth = internalState.desiredWidth,
             alignment = state.horizontalAlignment,
             paddings = state.paddings
         ).apply {
             updateCoordinates { oldState ->
-                oldState.copy(left = this, right = (this + state.width))
+                oldState.copy(left = this, right = (this + internalState.desiredWidth))
             }
         }
     }
 
     private fun calculateVerticalPosition(): Int {
         return PositionCalculator.calculateVerticalPosition(
-            parentHeight = state.parentHeight,
-            viewHeight = state.height,
+            parentHeight = internalState.parentHeight,
+            viewHeight = internalState.desiredHeight,
             alignment = state.verticalAlignment,
             paddings = state.paddings
         ).apply {
             updateCoordinates { oldState ->
-                oldState.copy(top = this, bottom = (this + state.height))
+                oldState.copy(top = this, bottom = (this + internalState.desiredHeight))
             }
         }
     }
@@ -122,11 +119,27 @@ class ImageDrawer(
         canvas.restore()
     }
 
-    override fun measure(desiredWidth: Int, desiredHeight: Int): Drawer.MeasuredResult {
+    override fun measure(
+        desiredWidth: Int,
+        desiredHeight: Int,
+        parentWidth: Int,
+        parentHeight: Int,
+    ): LayoutRender.MeasuredResult {
+
+        updateInternalState { oldState ->
+            oldState.copy(
+                desiredWidth = desiredWidth,
+                desiredHeight = desiredHeight,
+                parentWidth = parentWidth,
+                parentHeight = parentHeight
+            )
+        }
+
         // Рассчитываем координаты для отрисовки
         calculateHorizontalPosition()
         calculateVerticalPosition()
 
-        return Drawer.MeasuredResult(state.width, state.height)
+
+        return LayoutRender.MeasuredResult(internalState.desiredWidth, internalState.desiredHeight)
     }
 }

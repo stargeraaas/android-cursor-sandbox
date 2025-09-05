@@ -6,20 +6,19 @@ import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import dev.stargeras.sandbox.drawers.Paddings
-import dev.stargeras.sandbox.drawers.RectangleDrawer
-import dev.stargeras.sandbox.drawers.TitleSubtitleDrawer
+import dev.stargeras.sandbox.drawers.RectangleLayoutRender
+import dev.stargeras.sandbox.drawers.TitleSubtitleLayoutRender
+import dev.stargeras.sandbox.views.utils.Paddings
 
 class TitleSubtitleCard @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
+    defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
 
+    private val rectangleDrawer by lazy { RectangleLayoutRender(context, this) }
 
-    private val rectangleDrawer by lazy { RectangleDrawer(context, this) }
-
-    private val titleSubtitleDrawer by lazy { TitleSubtitleDrawer(context, this) }
+    private val titleSubtitleDrawer by lazy { TitleSubtitleLayoutRender(context, this) }
 
     private val rectangleWidthPx: Int =
         context.resources.getDimensionPixelSize(R.dimen.pc_min_content_width)
@@ -43,7 +42,6 @@ class TitleSubtitleCard @JvmOverloads constructor(
 
         titleSubtitleDrawer.updateState { oldState ->
             oldState.copy(
-                maxWidth = context.resources.getDimensionPixelSize(R.dimen.pc_max_content_width),
                 paddings = Paddings(
                     top = context.resources.getDimensionPixelSize(R.dimen.pc_vertical_padding),
                     right = context.resources.getDimensionPixelSize(R.dimen.pc_horizontal_padding),
@@ -60,6 +58,7 @@ class TitleSubtitleCard @JvmOverloads constructor(
                 requestFocus()
                 return false
             }
+
             MotionEvent.ACTION_UP -> {
                 performClick()
                 return false
@@ -78,9 +77,19 @@ class TitleSubtitleCard @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         // Вычисляем ширину и высоту для заголовка и подзаголовка
-        val measuredTitle = titleSubtitleDrawer.measure(rectangleWidthPx, titleSubtitleDrawer.getContentHeight())
+        val measuredTitle = titleSubtitleDrawer.measure(
+            desiredWidth = rectangleWidthPx,
+            desiredHeight = titleSubtitleDrawer.getContentHeight(),
+            parentWidth = rectangleWidthPx,
+            parentHeight = height
+        )
 
-        val measuredRectangle = rectangleDrawer.measure(rectangleWidthPx, measuredTitle.height)
+        val measuredRectangle = rectangleDrawer.measure(
+            desiredWidth = rectangleWidthPx,
+            desiredHeight = measuredTitle.height,
+            parentWidth = rectangleWidthPx,
+            parentHeight = height
+        )
 
         val measuredWidth = resolveSize(measuredRectangle.width, widthMeasureSpec)
         val measuredHeight = resolveSize(measuredRectangle.height, heightMeasureSpec)
@@ -125,6 +134,6 @@ class TitleSubtitleCard @JvmOverloads constructor(
     data class State(
         val title: String = "",
         val subtitle: String = "",
-        val isFocused: Boolean = false
+        val isFocused: Boolean = false,
     )
 }
